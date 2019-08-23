@@ -1,2 +1,1 @@
-# OnWebChange
-Watchdog for web change.
+# simple_web_watchdog
