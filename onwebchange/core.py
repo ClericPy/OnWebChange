@@ -355,7 +355,9 @@ class WatchdogCage(object):
                  shorten_result_function=None,
                  auto_save=True,
                  loop_interval=60,
-                 pretty_json=True):
+                 pretty_json=True,
+                 change_callback=None,
+                 loop=None):
         self.file_path = file_path or self.default_file_path
         # self.tasks: dict with key=task_name, value=WatchdogTask obj
         self.tasks = self.load_tasks_from_file(self.file_path)
@@ -363,6 +365,8 @@ class WatchdogCage(object):
         self.auto_save = auto_save
         self.loop_interval = loop_interval
         self.pretty_json = pretty_json
+        self.change_callback = change_callback
+        self.loop = loop
 
     @classmethod
     def refresh_file_path(cls, file_path):
@@ -459,6 +463,16 @@ class WatchdogCage(object):
             })
             state = f'task [{task.name}] has new change [{len(task.check_result_list)}/{task.max_change}] => `{shorten_result}`'
             task.update_last_change_time()
+            if self.change_callback:
+                if asyncio.iscoroutinefunction(self.change_callback):
+                    self.change_callback(task)
+                elif callable(self.change_callback):
+                    await self.loop.run_in_executor(None, self.change_callback,
+                                                    task)
+                else:
+                    self.logger.error(
+                        f'bad change_callback type: {type(self.change_callback)}, should be function/coroutinefunction'
+                    )
         else:
             state = ''
         task.check_result_list = task.check_result_list[:task.max_change]
@@ -516,13 +530,17 @@ class WebHandler(object):
                  loop_interval=60,
                  pretty_json=True,
                  auto_open_browser=True,
+                 change_callback=None,
                  app_kwargs=None):
+        self.loop = asyncio.get_event_loop()
         self.wc = WatchdogCage(
             file_path=file_path,
             shorten_result_function=shorten_result_function,
             auto_save=auto_save,
             loop_interval=loop_interval,
-            pretty_json=pretty_json)
+            pretty_json=pretty_json,
+            change_callback=change_callback,
+            loop=self.loop)
         self.app = app
         self.app.wc = self.wc
         self.app.logger = self.logger
@@ -535,7 +553,6 @@ class WebHandler(object):
             VUE_RESOURCE_CDN=self.VUE_RESOURCE_CDN,
         )
         self.app.pid = os.getpid()
-        self.loop = asyncio.get_event_loop()
         self.auto_open_browser = auto_open_browser
         self.app_kwargs = app_kwargs or {}
 

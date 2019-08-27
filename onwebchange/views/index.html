@@ -83,7 +83,8 @@
                 return {
                     tasks: [],
                     current_task_json: "",
-                    currentRow: null
+                    currentRow: null,
+                    global_last_change_time: null,
                 };
             },
             methods: {
@@ -95,11 +96,28 @@
                         closeOnClickModal: true,
                     });
                 },
+                check_change() {
+                    if (this.global_last_change_time == null) {
+                        this.global_last_change_time = '2019-08-28 00:26:57'
+                        return
+                    }
+                    if (this.tasks[0] == undefined) {
+                        return
+                    }
+                    var current_change_time = this.tasks[0].last_change_time
+                    if (current_change_time > this.global_last_change_time) {
+                        this.global_last_change_time = current_change_time
+                        console.log(this.global_last_change_time)
+                        console.log(current_change_time)
+                        alert("New change.")
+                    }
+                },
                 refreshData() {
                     // {"ok":true,"tasks":[{"name":"一拳超人","request_args":{"url":"https://www.mkzhan.com/209893/","method":"get","headers":{"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"}},"parser_name":"css","operation":".update-time","value":"$text","check_interval":60,"sorting_list":true,"last_check_time":null,"check_result_list":[{"data":"2019.08.23 更新至 第157话","time":"2019-08-27 11:35:33"}],"origin_url":"https://www.mkzhan.com/209893/","encoding":null,"last_change_time":"2019-08-27 11:35:33"}]}
                     this.$http.get('/get_task_list').then(
                         r => {
                             this.tasks = r.body.tasks
+                            this.check_change()
                             // console.log(JSON.stringify(this.tasks))
                         }, r => {
                             this.openAlert('错误的请求 (' + r.status + ') :' + r.statusText)
