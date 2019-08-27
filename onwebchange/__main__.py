@@ -17,7 +17,7 @@ def run_server(file_path=None,
         loop_interval=loop_interval,
         auto_open_browser=auto_open_browser,
         app_kwargs=app_kwargs)
-    wh.loop.run_until_complete(wh.run_server())
+    wh.run()
 
 
 @click.command(context_settings={

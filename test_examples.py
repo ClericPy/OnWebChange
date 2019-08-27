@@ -9,19 +9,25 @@ async def _test_task_css_parser():
                         '.lede-paragraph', '@class')
     resp = await task.get_resp()
     result = task.get_parse_result(resp)
-    assert result == 'lede-paragraph'
+    assert result == ['lede-paragraph']
     # test css selector outer-html
     task.value = '$string'
     result = task.get_parse_result(resp)
-    assert result == '<p class="lede-paragraph">The Python Package Index (PyPI) is a repository of software for the Python programming language.</p>'
+    assert result == [
+        '<p class="lede-paragraph">The Python Package Index (PyPI) is a repository of software for the Python programming language.</p>'
+    ]
     # test css selector text
     task.value = '$text'
     result = task.get_parse_result(resp)
-    assert result == 'The Python Package Index (PyPI) is a repository of software for the Python programming language.'
+    assert result == [
+        'The Python Package Index (PyPI) is a repository of software for the Python programming language.'
+    ]
     # test css selector text content
     task.value = '$get_text'
     result = task.get_parse_result(resp)
-    assert result == 'The Python Package Index (PyPI) is a repository of software for the Python programming language.'
+    assert result == [
+        'The Python Package Index (PyPI) is a repository of software for the Python programming language.'
+    ]
 
 
 async def _test_task_re_parser():
@@ -96,37 +102,10 @@ def test_task_json_parser():
 def test_dump_load_task():
     loop.run_until_complete(_test_dump_load_task())
 
-def test_wc_in_thread():
-
-    def test_in_thread():
-
-        async def test_wc():
-            wc = WatchdogCage()
-            task = WatchdogTask('1', 'http://baidu.com', 're', '.{,5}"', '$0')
-            wc.add_task(task)
-            task = WatchdogTask('2', 'https://p.3.cn', 're', '.{,5}"', '$0')
-            wc.add_task(task)
-            task = WatchdogTask(
-                '3', 'https://docs.python.org/3/library/pathlib.html', 're',
-                '.{,5}"', '$0')
-            wc.add_task(task)
-            task = WatchdogTask('4', 'https://httpbin.org/get', 're', '.{,5}"',
-                                '$0')
-            wc.add_task(task)
-            print(wc)
-            await wc.run()
-
-        asyncio.run(test_wc())
-
-    from threading import Thread
-    t = Thread(target=test_in_thread)
-    t.start()
-    t.join()
 
 if __name__ == "__main__":
-    # test_task_css_parser()
-    # test_task_re_parser()
-    # test_task_python_parser()
-    # test_task_json_parser()
-    # test_dump_load_task()
-    test_wc_in_thread()
+    test_task_css_parser()
+    test_task_re_parser()
+    test_task_python_parser()
+    test_task_json_parser()
+    test_dump_load_task()

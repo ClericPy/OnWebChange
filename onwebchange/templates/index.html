@@ -97,18 +97,15 @@
                     });
                 },
                 check_change() {
-                    if (this.global_last_change_time == null) {
-                        this.global_last_change_time = '2019-08-28 00:26:57'
-                        return
-                    }
                     if (this.tasks[0] == undefined) {
                         return
                     }
                     var current_change_time = this.tasks[0].last_change_time
+                    if (this.global_last_change_time == null) {
+                        this.global_last_change_time = current_change_time
+                    }
                     if (current_change_time > this.global_last_change_time) {
                         this.global_last_change_time = current_change_time
-                        console.log(this.global_last_change_time)
-                        console.log(current_change_time)
                         alert("New change.")
                     }
                 },

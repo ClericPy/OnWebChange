@@ -182,11 +182,11 @@ class WatchdogTask(object):
                 resp.text, features=self.BeautifulSoupFeatures)
             result = soup.select(self.operation)
             if self.value == '$text':
-                return ''.join([item.text for item in result])
+                return [item.text for item in result]
             elif self.value == '$get_text':
-                return ''.join([item.get_text() for item in result])
+                return [item.get_text() for item in result]
             elif not self.value or self.value == '$string':
-                return ''.join([str(item) for item in result])
+                return [str(item) for item in result]
             elif self.value.startswith('@'):
                 result = [item.get(self.value[1:], '') for item in result]
                 # for class always be seen as list
@@ -572,3 +572,6 @@ class WebHandler(object):
             webbrowser.open(console_url)
 
         await asyncio.ensure_future(self.wc.run())
+
+    def run(self):
+        self.loop.run_until_complete(self.run_server())

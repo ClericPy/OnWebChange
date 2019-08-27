@@ -11,7 +11,7 @@ from .core import GLOBAL_LOCK, WatchdogTask
 
 # app.wc = xxx
 app = Bottle()
-index_tpl_path = str(pathlib.Path(__file__).parent / 'views').replace(
+index_tpl_path = str(pathlib.Path(__file__).parent / 'templates').replace(
     '\\', '/') + '/index.html'
 
 
