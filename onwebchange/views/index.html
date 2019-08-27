@@ -5,13 +5,13 @@
     <meta charset="utf-8" />
     <meta name="referrer" content="never">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Console</title>
+    <title>Console (interval={{loop_interval}}s)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="https://cdn.staticfile.org/vue/2.5.17/vue.min.js"></script>
-    <script src="https://cdn.staticfile.org/element-ui/2.4.7/index.js"></script>
-    <script src="https://cdn.staticfile.org/vue-resource/1.5.1/vue-resource.min.js"></script>
+    <script src="{{cdn_urls['VUE_JS_CDN']}}"></script>
+    <script src="{{cdn_urls['ELEMENT_JS_CDN']}}"></script>
+    <script src="{{cdn_urls['VUE_RESOURCE_CDN']}}"></script>
     <style>
-        @import url("https://cdn.staticfile.org/element-ui/2.4.7/theme-chalk/index.css");
+        @import url("{{cdn_urls['ELEMENT_CSS_CDN']}}");
 
         html {
             width: 98%;
@@ -30,10 +30,18 @@
             v-model="current_task_json">
         </el-input>
         <br>
-        <el-button @click.native.prevent="addTask" type="primary">New Task<i
-                class="el-icon-circle-plus el-icon--right"></i></el-button>
-        <el-button @click.native.prevent="updateTask" type="warning">Update Task<i
-                class="el-icon-success el-icon--right"></i></el-button>
+        <el-row :gutter="24">
+            <el-col :span="6">
+                <el-button @click.native.prevent="addTask" type="primary">New Task<i
+                        class="el-icon-circle-plus el-icon--right"></i></el-button>
+                <el-button @click.native.prevent="updateTask" type="warning">Update Task<i
+                        class="el-icon-success el-icon--right"></i></el-button>
+            </el-col>
+            <el-col :span="6">
+                <el-button @click.native.prevent="shutdown" type="danger">Shutdown<i
+                        class="el-icon-error el-icon--right"></i></el-button>
+            </el-col>
+        </el-row>
 
         <template style="width: 100%; height: 70%;">
 
@@ -116,9 +124,20 @@
                     )
 
                 },
+                shutdown() {
+                    this.$http.get('/shutdown').then(
+                        r => {
+                            this.openAlert('server shutdown.')
+                        }, r => {
+                            this.openAlert('server shutdown.')
+                        }
+                    )
+                },
                 handleCurrentChange(val) {
                     this.currentRow = val;
-                    this.current_task_json = JSON.stringify(this.currentRow, null, 2)
+                    if (this.currentRow != null) {
+                        this.current_task_json = JSON.stringify(this.currentRow, null, 2)
+                    }
                 },
                 addTask() {
                     var data = {
@@ -157,6 +176,9 @@
             delimiters: ['${', '}']
         }).$mount('#app')
         window.onload = app.onload_function
+        setInterval(() => {
+            app.refreshData()
+        }, 10000);
     </script>
 </body>
 

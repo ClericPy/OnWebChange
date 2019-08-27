@@ -25,7 +25,7 @@ def run_server(file_path=None,
     "ignore_unknown_options": True,
 })
 @click.version_option(__version__, "-V", "--version", prog_name="onwebchange")
-@click.option("--file-path", "-e", default=None, help="file_path for storage")
+@click.option("--file-path", "-f", default=None, help="file_path for storage")
 @click.option(
     "--auto-open-browser",
     "-a",

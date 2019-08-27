@@ -526,7 +526,14 @@ class WebHandler(object):
         self.app = app
         self.app.wc = self.wc
         self.app.logger = self.logger
+        self.app.loop_interval = loop_interval
         self.app.lock = GLOBAL_LOCK
+        self.app.cdn_urls = dict(
+            VUE_JS_CDN=self.VUE_JS_CDN,
+            ELEMENT_CSS_CDN=self.ELEMENT_CSS_CDN,
+            ELEMENT_JS_CDN=self.ELEMENT_JS_CDN,
+            VUE_RESOURCE_CDN=self.VUE_RESOURCE_CDN,
+        )
         self.app.pid = os.getpid()
         self.loop = asyncio.get_event_loop()
         self.auto_open_browser = auto_open_browser
@@ -541,8 +548,8 @@ class WebHandler(object):
         self.logger.info(
             f'run_server with kwargs: {self.app_kwargs}, console_url: {console_url}'
         )
-        self.loop.run_in_executor(None,
-                                  partial(self.app.run, kwargs=self.app_kwargs))
+        self.loop.run_in_executor(None, partial(self.app.run,
+                                                **self.app_kwargs))
         if self.auto_open_browser:
             import webbrowser
             webbrowser.open(console_url)

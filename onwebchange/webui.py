@@ -17,7 +17,8 @@ index_tpl_path = str(pathlib.Path(__file__).parent / 'views').replace(
 
 @app.get('/')
 def index():
-    return template(index_tpl_path)
+    return template(
+        index_tpl_path, cdn_urls=app.cdn_urls, loop_interval=app.loop_interval)
 
 
 @app.get('/shutdown')
@@ -59,7 +60,7 @@ def update_task():
     try:
         task = WatchdogTask.load_task(task_json)
         ok = app.wc.update_task(task)
-    except:
+    except Exception:
         app.wc.logger.error(traceback.format_exc())
         ok = False
     return {'ok': ok}
@@ -69,9 +70,8 @@ def update_task():
 def remove_task():
     # receive a standard task json
     task_name = request.GET.get('name')
-    if not task_name:
-        return {'ok': False}
-    task_name = task_name.encode('latin-1').decode('utf-8')
+    if task_name:
+        task_name = task_name.encode('latin-1').decode('utf-8')
     ok = app.wc.remove_task(task_name)
     return {'ok': ok}
 
