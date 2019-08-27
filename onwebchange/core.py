@@ -74,7 +74,7 @@ class WatchdogTask(object):
             :type max_change: list, optional
             :param check_result_list: latest `max_change` checking result, usually use md5 to shorten it, defaults to None
             :type check_result_list: list, optional
-            :param origin_url: load the url to see the changement.
+            :param origin_url: the url to see the changement, defaults to request_args['url']
             :type origin_url: str, optional
 
             request_args examples:
@@ -83,22 +83,22 @@ class WatchdogTask(object):
                 args:
                     {'url': 'http://pypi.org', 'method': 'get'}
                 curl:
-                    r'''curl 'https://pypi.org/' -H 'authority: pypi.org' -H 'cache-control: max-age=0' -H 'upgrade-insecure-requests: 1' -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36' -H 'sec-fetch-mode: navigate' -H 'sec-fetch-user: ?1' -H 'dnt: 1' -H 'accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3' -H 'sec-fetch-site: none' -H 'accept-encoding: gzip, deflate, br' -H 'accept-language: zh-CN,zh;q=0.9' -H 'cookie: user_id__insecure=; session_id=' --compressed'''
+                    curl 'https://pypi.org/' -H 'authority: pypi.org' -H 'cache-control: max-age=0' -H 'upgrade-insecure-requests: 1' -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36' -H 'sec-fetch-mode: navigate' -H 'sec-fetch-user: ?1' -H 'dnt: 1' -H 'accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3' -H 'sec-fetch-site: none' -H 'accept-encoding: gzip, deflate, br' -H 'accept-language: zh-CN,zh;q=0.9' -H 'cookie: user_id__insecure=; session_id=' --compressed
 
             parser examples:
                 re:
-                    operation = 'None'
-                    value = '$0' (or '$1', `$` means the group num for regex result)
+                    operation = '.*?abc'
+                    value = '$0' (or '$1', `$` means the group index for regex result)
                 css:
                     operation = ".className"
                     value = '$string'
-                        $string: return str(node) as outer html
-                        $text: return node.text
-                        $get_text: return node.get_text()
-                        @attr: get attr from node
+                        $string: return [node] as outer html
+                        $text: return [node.text]
+                        $get_text: return [node.get_text()]
+                        @attr: [get attribute from node]
                 json:
                     view more: https://github.com/adriank/ObjectPath
-                    input response JSON string: {"a": 1}
+                    # input response JSON string: {"a": 1}
                     operation = "$.a"
                     value = None
 
@@ -125,7 +125,7 @@ class WatchdogTask(object):
         self.last_change_time = last_change_time or ttime(0)
         # check_result_list: [{'data': 'xxx', 'time': '2019-08-23 19:27:20'}]
         self.check_result_list = check_result_list or []
-        self.origin_url = origin_url
+        self.origin_url = origin_url or self.request_args['url']
         self.encoding = encoding or None
         self.update_last_change_time()
         self.ensure_req()
@@ -330,6 +330,7 @@ class WatchdogTask(object):
             'sorting_list': self.sorting_list,
             'last_check_time': self.last_check_time,
             'check_result_list': self.check_result_list,
+            'max_change': self.max_change,
             'origin_url': self.origin_url,
             'encoding': self.encoding,
             'last_change_time': self.last_change_time
