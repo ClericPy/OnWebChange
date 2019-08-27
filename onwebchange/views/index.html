@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="referrer" content="never">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Console</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.staticfile.org/vue/2.5.17/vue.min.js"></script>
+    <script src="https://cdn.staticfile.org/element-ui/2.4.7/index.js"></script>
+    <script src="https://cdn.staticfile.org/vue-resource/1.5.1/vue-resource.min.js"></script>
+    <style>
+        @import url("https://cdn.staticfile.org/element-ui/2.4.7/theme-chalk/index.css");
+
+        html {
+            width: 98%;
+            height: 98%;
+            margin: 0 auto;
+            background-color: #eceff1;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+
+        <el-input type="textarea" :autosize="{ minRows: 15, maxRows: 15}" placeholder="请选择 task"
+            v-model="current_task_json">
+        </el-input>
+        <br>
+        <el-button @click.native.prevent="addTask" type="primary">New Task<i
+                class="el-icon-circle-plus el-icon--right"></i></el-button>
+        <el-button @click.native.prevent="updateTask" type="warning">Update Task<i
+                class="el-icon-success el-icon--right"></i></el-button>
+
+        <template style="width: 100%; height: 70%;">
+
+            <el-table :data="tasks" highlight-current-row @current-change="handleCurrentChange" stripe
+                style="width: 100%; height: 100%;">
+                <el-table-column prop="name" label="name" width="180">
+                </el-table-column>
+                <el-table-column prop="check_interval" label="check_interval" width="180">
+                </el-table-column>
+                <el-table-column prop="last_check_time" label="last_check_time">
+                </el-table-column>
+                <el-table-column prop="last_change_time" label="last_change_time">
+                </el-table-column>
+                <el-table-column prop="latest_data" label="latest_data">
+                </el-table-column>
+                <el-table-column label="origin_url">
+                    <template slot-scope="scope">
+                        <a :href="scope.row.origin_url" target="_blank"
+                            class="buttonText">${scope.row.origin_url}</a></template>
+                </el-table-column>
+                <el-table-column prop="change_time_ago" label="change_time_ago">
+                </el-table-column>
+                <el-table-column fixed="right" label="操作" width="120">
+                    <template slot-scope="scope">
+                        <el-button @click.native.prevent="removeTask(scope.row.name, tasks)" type="danger"
+                            icon="el-icon-delete" circle>
+                        </el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </template>
+
+
+    </div>
+
+    <script>
+        var Main = {
+            data() {
+                return {
+                    tasks: [],
+                    current_task_json: "",
+                    currentRow: null
+                };
+            },
+            methods: {
+                openAlert(body, title) {
+                    this.$alert(body, title, {
+                        confirmButtonText: '确定',
+                        distinguishCancelAndClose: true,
+                        closeOnPressEscape: true,
+                        closeOnClickModal: true,
+                    });
+                },
+                refreshData() {
+                    // {"ok":true,"tasks":[{"name":"一拳超人","request_args":{"url":"https://www.mkzhan.com/209893/","method":"get","headers":{"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"}},"parser_name":"css","operation":".update-time","value":"$text","check_interval":60,"sorting_list":true,"last_check_time":null,"check_result_list":[{"data":"2019.08.23 更新至 第157话","time":"2019-08-27 11:35:33"}],"origin_url":"https://www.mkzhan.com/209893/","encoding":null,"last_change_time":"2019-08-27 11:35:33"}]}
+                    this.$http.get('/get_task_list').then(
+                        r => {
+                            this.tasks = r.body.tasks
+                            // console.log(JSON.stringify(this.tasks))
+                        }, r => {
+                            this.openAlert('错误的请求 (' + r.status + ') :' + r.statusText)
+                        }
+                    )
+                },
+                onload_function() {
+                    this.refreshData()
+                },
+                removeTask(name) {
+                    this.$http.get('/remove_task', {
+                        params: {
+                            name: name
+                        }
+                    }).then(
+                        r => {
+                            this.openAlert(JSON.stringify(r.body))
+                            this.refreshData()
+                        }, r => {
+                            this.openAlert('错误的请求 (' + r.status + ') :' + r.statusText)
+                        }
+                    )
+
+                },
+                handleCurrentChange(val) {
+                    this.currentRow = val;
+                    this.current_task_json = JSON.stringify(this.currentRow, null, 2)
+                },
+                addTask() {
+                    var data = {
+                        "name": "",
+                        "request_args": "",
+                        "parser_name": "",
+                        "operation": "",
+                        "value": "",
+                        "check_interval": 60,
+                        "sorting_list": true,
+                        "origin_url": "",
+                        "encoding": null
+                    }
+                    this.current_task_json = JSON.stringify(data, null, 2)
+                },
+                updateTask() {
+                    var data = this.current_task_json
+                    this.$http.post('/update_task', data).then(
+                        r => {
+                            this.openAlert(JSON.stringify(r.body))
+                            this.refreshData()
+                        }, r => {
+                            this.openAlert('错误的请求 (' + r.status + ') :' + r.statusText)
+                        }
+                    )
+                }
+
+            },
+            watch: {
+
+            },
+            computed: {}
+        }
+        var vue_app = Vue.extend(Main)
+        var app = new vue_app({
+            delimiters: ['${', '}']
+        }).$mount('#app')
+        window.onload = app.onload_function
+    </script>
+</body>
+
+</html>

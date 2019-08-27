@@ -1,3 +1,4 @@
+#! coding: utf-8
 import asyncio
 import json
 import os
@@ -5,15 +6,19 @@ import pathlib
 import time
 from functools import partial
 from inspect import getsource
+from threading import Lock
 
 from torequests.dummy import Requests
 from torequests.logs import init_logger
-from torequests.utils import curlparse, find_one, md5, ttime, flush_print
+from torequests.utils import curlparse, find_one, flush_print, md5, ttime
+
+SHORTEN_RESULT_MAX_LENGTH = 100
+GLOBAL_LOCK = Lock()
 
 
 def _default_shorten_result_function(result):
     string = str(result)
-    if len(string) < 50:
+    if len(string) < SHORTEN_RESULT_MAX_LENGTH:
         return string
     else:
         # 32bit md5
@@ -45,7 +50,9 @@ class WatchdogTask(object):
                  max_change=2,
                  check_result_list=None,
                  origin_url=None,
-                 encoding=None):
+                 encoding=None,
+                 last_change_time=None,
+                 **nonsense_kwargs):
         """Watchdog task.
             :param name: Task name.
             :type name: str
@@ -115,14 +122,19 @@ class WatchdogTask(object):
         self.sorting_list = sorting_list
         self.last_check_time = last_check_time
         self.max_change = max_change
+        self.last_change_time = last_change_time or ttime(0)
         # check_result_list: [{'data': 'xxx', 'time': '2019-08-23 19:27:20'}]
         self.check_result_list = check_result_list or []
         self.origin_url = origin_url
-        self.encoding = encoding
+        self.encoding = encoding or None
         self.update_last_change_time()
-        if not self.req:
-            self.__class__.req = Requests(
-                default_host_frequency=self.DEFAULT_HOST_FREQUENCY)
+        self.ensure_req()
+
+    @classmethod
+    def ensure_req(cls):
+        if not cls.req:
+            cls.req = Requests(
+                default_host_frequency=cls.DEFAULT_HOST_FREQUENCY)
 
     @property
     def is_finished(self):
@@ -132,7 +144,7 @@ class WatchdogTask(object):
         self.last_change_time = ttime(0)
         for item in self.check_result_list:
             if item['time'] > self.last_change_time:
-                self.last_change_time = item['data']
+                self.last_change_time = item['time']
         return self.last_change_time
 
     def _default_parser(self, resp):
@@ -320,6 +332,7 @@ class WatchdogTask(object):
             'check_result_list': self.check_result_list,
             'origin_url': self.origin_url,
             'encoding': self.encoding,
+            'last_change_time': self.last_change_time
         }
 
     def dump_task(self):
@@ -345,7 +358,7 @@ class WatchdogCage(object):
                  pretty_json=True):
         self.file_path = file_path or self.default_file_path
         # self.tasks: dict with key=task_name, value=WatchdogTask obj
-        self.tasks = self.load_tasks(self.file_path)
+        self.tasks = self.load_tasks_from_file(self.file_path)
         self.shorten_result_function = shorten_result_function or _default_shorten_result_function
         self.auto_save = auto_save
         self.loop_interval = loop_interval
@@ -395,10 +408,10 @@ class WatchdogCage(object):
         return ok
 
     def remove_task(self, task_name):
-        ok = bool(self.tasks.pop(task_name, None))
-        if ok:
+        is_exist = bool(self.tasks.pop(task_name, None))
+        if is_exist:
             self.check_auto_save()
-        return ok
+        return task_name not in self.tasks
 
     def get_task(self, task_name=None):
         if task_name:
@@ -413,21 +426,23 @@ class WatchdogCage(object):
         return {task.name: task.to_dict() for task in self.tasks.values()}
 
     def save_tasks(self, file_path=None):
-        file_path = file_path or self.file_path
-        with open(file_path, 'w') as f:
-            if self.pretty_json:
-                json.dump(self.tasks_dict, f, ensure_ascii=False, indent=2)
-            else:
-                json.dump(self.tasks_dict, f)
+        with GLOBAL_LOCK:
+            file_path = file_path or self.file_path
+            with open(file_path, 'w', encoding='utf-8') as f:
+                if self.pretty_json:
+                    json.dump(self.tasks_dict, f, ensure_ascii=False, indent=2)
+                else:
+                    json.dump(self.tasks_dict, f)
 
     @staticmethod
-    def load_tasks(file_path):
-        with open(file_path) as f:
-            tasks_dict = {
-                task_name: WatchdogTask.load_task(task_json)
-                for task_name, task_json in json.load(f).items()
-            }
-        return tasks_dict
+    def load_tasks_from_file(file_path):
+        with GLOBAL_LOCK:
+            with open(file_path, encoding='utf-8') as f:
+                tasks_dict = {
+                    task_name: WatchdogTask.load_task(task_json)
+                    for task_name, task_json in json.load(f).items()
+                }
+            return tasks_dict
 
     async def run_task(self, task):
         result = await task.fetch_once()
@@ -447,11 +462,13 @@ class WatchdogCage(object):
         else:
             state = ''
         task.check_result_list = task.check_result_list[:task.max_change]
+        task.last_check_time = ttime()
         return state
 
     async def run(self):
         self.logger.info(f'{len(self.tasks)} tasks start running.')
-        while self.tasks:
+        WatchdogTask.ensure_req()
+        while 1:
             changes = []
             ttime_0 = ttime(0)
             running_tasks = [
@@ -486,24 +503,48 @@ class WatchdogCage(object):
 
 class WebHandler(object):
     logger = init_logger('WebHandler')
-    VUEJS_CDN = 'https://cdn.staticfile.org/vue/2.6.10/vue.min.js'
+    VUE_JS_CDN = 'https://cdn.staticfile.org/vue/2.6.10/vue.min.js'
     ELEMENT_CSS_CDN = 'https://cdn.staticfile.org/element-ui/2.11.1/theme-chalk/index.css'
     ELEMENT_JS_CDN = 'https://cdn.staticfile.org/element-ui/2.11.1/index.js'
+    VUE_RESOURCE_CDN = 'https://cdn.staticfile.org/vue-resource/1.5.1/vue-resource.min.js'
 
-    def __init__(self, app, watchdog_cage_args=None):
-        self.watchdog_cage_args = watchdog_cage_args or {}
-        self.wc = WatchdogCage(**self.watchdog_cage_args)
+    def __init__(self,
+                 app,
+                 file_path=None,
+                 shorten_result_function=None,
+                 auto_save=True,
+                 loop_interval=60,
+                 pretty_json=True,
+                 auto_open_browser=True,
+                 app_kwargs=None):
+        self.wc = WatchdogCage(
+            file_path=file_path,
+            shorten_result_function=shorten_result_function,
+            auto_save=auto_save,
+            loop_interval=loop_interval,
+            pretty_json=pretty_json)
         self.app = app
         self.app.wc = self.wc
+        self.app.logger = self.logger
+        self.app.lock = GLOBAL_LOCK
+        self.app.pid = os.getpid()
         self.loop = asyncio.get_event_loop()
+        self.auto_open_browser = auto_open_browser
+        self.app_kwargs = app_kwargs or {}
 
-    async def run_server(self, auto_open_browser=True, **kwargs):
-        self.logger.info(f'run_server with kwargs: {kwargs}')
+    async def run_server(self):
         # http://127.0.0.1:8080/
-        host, port = kwargs.get('host', '127.0.0.1'), kwargs.get('port', 8080)
-        self.loop.run_in_executor(None, partial(self.app.run, kwargs=kwargs))
-        if auto_open_browser:
+        host, port = self.app_kwargs.get('host',
+                                         '127.0.0.1'), self.app_kwargs.get(
+                                             'port', 8080)
+        console_url = f'http://{host}:{port}'
+        self.logger.info(
+            f'run_server with kwargs: {self.app_kwargs}, console_url: {console_url}'
+        )
+        self.loop.run_in_executor(None,
+                                  partial(self.app.run, kwargs=self.app_kwargs))
+        if self.auto_open_browser:
             import webbrowser
-            webbrowser.open(f'http://{host}:{port}')
+            webbrowser.open(console_url)
 
         await asyncio.ensure_future(self.wc.run())
