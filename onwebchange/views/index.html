@@ -26,7 +26,7 @@
 <body>
     <div id="app">
 
-        <el-input type="textarea" :autosize="{ minRows: 15, maxRows: 15}" placeholder="请选择 task"
+        <el-input type="textarea" :autosize="{ minRows: 15, maxRows: 15}" placeholder="choose task from the table"
             v-model="current_task_json">
         </el-input>
         <br>
@@ -64,7 +64,7 @@
                 </el-table-column>
                 <el-table-column prop="change_time_ago" label="change_time_ago">
                 </el-table-column>
-                <el-table-column fixed="right" label="操作" width="120">
+                <el-table-column fixed="right" label="Delete" width="120">
                     <template slot-scope="scope">
                         <el-button @click.native.prevent="removeTask(scope.row.name, tasks)" type="danger"
                             icon="el-icon-delete" circle>
@@ -90,7 +90,7 @@
             methods: {
                 openAlert(body, title) {
                     this.$alert(body, title, {
-                        confirmButtonText: '确定',
+                        confirmButtonText: 'Ok',
                         distinguishCancelAndClose: true,
                         closeOnPressEscape: true,
                         closeOnClickModal: true,
@@ -113,14 +113,12 @@
                     }
                 },
                 refreshData() {
-                    // {"ok":true,"tasks":[{"name":"一拳超人","request_args":{"url":"https://www.mkzhan.com/209893/","method":"get","headers":{"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"}},"parser_name":"css","operation":".update-time","value":"$text","check_interval":60,"sorting_list":true,"last_check_time":null,"check_result_list":[{"data":"2019.08.23 更新至 第157话","time":"2019-08-27 11:35:33"}],"origin_url":"https://www.mkzhan.com/209893/","encoding":null,"last_change_time":"2019-08-27 11:35:33"}]}
                     this.$http.get('/get_task_list').then(
                         r => {
                             this.tasks = r.body.tasks
                             this.check_change()
-                            // console.log(JSON.stringify(this.tasks))
                         }, r => {
-                            this.openAlert('错误的请求 (' + r.status + ') :' + r.statusText)
+                            this.openAlert('Bad request (' + r.status + ') :' + r.statusText)
                         }
                     )
                 },
@@ -137,7 +135,7 @@
                             this.openAlert(JSON.stringify(r.body))
                             this.refreshData()
                         }, r => {
-                            this.openAlert('错误的请求 (' + r.status + ') :' + r.statusText)
+                            this.openAlert('Bad request (' + r.status + ') :' + r.statusText)
                         }
                     )
 
@@ -178,7 +176,7 @@
                             this.openAlert(JSON.stringify(r.body))
                             this.refreshData()
                         }, r => {
-                            this.openAlert('错误的请求 (' + r.status + ') :' + r.statusText)
+                            this.openAlert('Bad request (' + r.status + ') :' + r.statusText)
                         }
                     )
                 }
