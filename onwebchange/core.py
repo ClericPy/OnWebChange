@@ -178,15 +178,16 @@ class WatchdogTask(object):
             from bs4 import BeautifulSoup
             self.__class__.BeautifulSoup = BeautifulSoup
         if resp:
+            result = []
             soup = self.BeautifulSoup(
                 resp.text, features=self.BeautifulSoupFeatures)
             result = soup.select(self.operation)
             if self.value == '$text':
-                return [(item.text or '').strip() for item in result]
+                result = [item.text for item in result]
             elif self.value == '$get_text':
-                return [(item.get_text() or '').strip() for item in result]
+                result = [item.get_text() for item in result]
             elif not self.value or self.value == '$string':
-                return [(str(item) or '').strip() for item in result]
+                result = [str(item) for item in result]
             elif self.value.startswith('@'):
                 result = [item.get(self.value[1:], '') for item in result]
                 # for class always be seen as list
@@ -194,10 +195,10 @@ class WatchdogTask(object):
                     ' '.join(item) if isinstance(item, list) else item
                     for item in result
                 ]
-                # ensure the plain sequence
-                if self.sorting_list:
-                    result = sorted(result)
-                return result
+            # ensure the plain sequence
+            if self.sorting_list:
+                result = sorted([(item or '').strip() for item in result])
+            return result
         else:
             self.logger.error(
                 f'[{self.name}] request fail: [{getattr(resp, "status_code", -1)}], {resp.url}\n{resp.text.strip()[:200]} ...'
