@@ -1,4 +1,24 @@
-# simple_web_watchdog
+# onwebchange
+
+### Install
+
+> pip install onwebchange -U
+
+
+
+### Requirements
+
+> torequests
+> click
+> bottle
+> objectpath
+> beautifulsoup4
+
+
+
+### Default Web UI
+
+![demo](demo.png)
 
 
 
@@ -24,6 +44,7 @@ if __name__ == "__main__":
     wh.run()
 
 ```
+
 
 
 ### New Task template
@@ -64,7 +85,7 @@ if __name__ == "__main__":
 }
 ```
 
-### more docs
+### More docs
 ```python
 
 Watchdog task.
