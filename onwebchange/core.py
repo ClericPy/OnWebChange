@@ -182,11 +182,11 @@ class WatchdogTask(object):
                 resp.text, features=self.BeautifulSoupFeatures)
             result = soup.select(self.operation)
             if self.value == '$text':
-                return [item.text for item in result]
+                return [(item.text or '').strip() for item in result]
             elif self.value == '$get_text':
-                return [item.get_text() for item in result]
+                return [(item.get_text() or '').strip() for item in result]
             elif not self.value or self.value == '$string':
-                return [str(item) for item in result]
+                return [(str(item) or '').strip() for item in result]
             elif self.value.startswith('@'):
                 result = [item.get(self.value[1:], '') for item in result]
                 # for class always be seen as list

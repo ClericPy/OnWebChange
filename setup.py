@@ -13,7 +13,9 @@ win32:
 rm -rf dist;rm -rf build;python3 setup.py bdist_wheel;twine upload "dist/*";rm -rf dist;rm -rf build
 """
 
-install_requires = ['torequests', 'click', 'bottle', 'objectpath']
+install_requires = [
+    'torequests', 'click', 'bottle', 'objectpath', 'beautifulsoup4'
+]
 
 if sys.version_info < (3, 6, 0):
     raise RuntimeError("aiohttp 3.x requires Python 3.6.0+")
