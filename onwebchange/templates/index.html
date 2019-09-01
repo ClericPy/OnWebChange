@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="referrer" content="never">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Console (interval={{loop_interval}}s)</title>
+    <title>Watchdog (interval={{loop_interval}}s)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="{{cdn_urls['VUE_JS_CDN']}}"></script>
     <script src="{{cdn_urls['ELEMENT_JS_CDN']}}"></script>
@@ -30,18 +30,12 @@
             v-model="current_task_json">
         </el-input>
         <br>
-        <el-row :gutter="24">
-            <el-col :span="6">
-                <el-button @click.native.prevent="addTask" type="primary">New Task<i
-                        class="el-icon-circle-plus el-icon--right"></i></el-button>
-                <el-button @click.native.prevent="updateTask" type="warning">Update Task<i
-                        class="el-icon-success el-icon--right"></i></el-button>
-            </el-col>
-            <el-col :span="6">
-                <el-button @click.native.prevent="shutdown" type="danger">Shutdown<i
-                        class="el-icon-error el-icon--right"></i></el-button>
-            </el-col>
-        </el-row>
+        <el-button @click.native.prevent="addTask" type="primary">New Task<i
+                class="el-icon-circle-plus el-icon--right"></i></el-button>
+        <el-button @click.native.prevent="updateTask" type="warning">Update Task<i
+                class="el-icon-success el-icon--right"></i></el-button>
+        <el-button @click.native.prevent="shutdown" type="danger">Shutdown<i class="el-icon-error el-icon--right"></i>
+        </el-button>
 
         <template style="width: 100%; height: 70%;">
 
@@ -192,7 +186,7 @@
         window.onload = app.onload_function
         setInterval(() => {
             app.refreshData()
-        }, 10000);
+        }, 30000);
     </script>
 </body>
 

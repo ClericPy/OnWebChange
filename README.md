@@ -14,13 +14,32 @@
 > objectpath
 > beautifulsoup4
 
-
-
 ### Default Web UI
 
 ![demo](demo.png)
 
+#### Quick start
 
+1. Press [New Task] button
+
+2. Fill the blank:
+    > replace the " to \" for json format safe.
+
+    name: "pypi trending projects no1"
+
+    request_args: "https://pypi.org/"
+
+    parser_name: "css"
+
+    operation: "#content > div:nth-child(4) > div > div:nth-child(1) > ul > li:nth-child(1) > a > h3 > span.package-snippet__name"
+
+    value: "$text"
+
+    check_interval: 300
+    
+    max_change: 10
+
+3. Press [Update Task] button
 
 ### example
 

@@ -19,7 +19,7 @@ GLOBAL_LOCK = Lock()
 def _default_shorten_result_function(result):
     string = str(result)
     if len(string) < SHORTEN_RESULT_MAX_LENGTH:
-        return string
+        return string.strip()
     else:
         # 32bit md5
         return md5(result)
@@ -45,9 +45,9 @@ class WatchdogTask(object):
                  operation=None,
                  value=None,
                  sorting_list=True,
-                 check_interval=60,
+                 check_interval=300,
                  last_check_time=None,
-                 max_change=2,
+                 max_change=5,
                  check_result_list=None,
                  origin_url=None,
                  encoding=None,
@@ -66,11 +66,11 @@ class WatchdogTask(object):
             :type value: str, optional
             :param sorting_list: whether sorting the list of result from `css or other parsers`, defaults to True
             :type sorting_list: bool, optional
-            :param check_interval: check_interval, defaults to 60 seconds
+            :param check_interval: check_interval, defaults to 300 seconds
             :type check_interval: int, optional
             :param last_check_time: last checking ttime like 2019-08-23 19:29:14, defaults to None
             :type last_check_time: str, optional
-            :param max_change: save result in check_result_list, save the latest 2 change, defaults to 2
+            :param max_change: save result in check_result_list, save the latest 5 change, defaults to 5
             :type max_change: list, optional
             :param check_result_list: latest `max_change` checking result, usually use md5 to shorten it, defaults to None
             :type check_result_list: list, optional
@@ -356,7 +356,7 @@ class WatchdogCage(object):
                  file_path=None,
                  shorten_result_function=None,
                  auto_save=True,
-                 loop_interval=60,
+                 loop_interval=300,
                  pretty_json=True,
                  change_callback=None,
                  loop=None):
@@ -529,7 +529,7 @@ class WebHandler(object):
                  file_path=None,
                  shorten_result_function=None,
                  auto_save=True,
-                 loop_interval=60,
+                 loop_interval=300,
                  pretty_json=True,
                  auto_open_browser=True,
                  change_callback=None,
