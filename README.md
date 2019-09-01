@@ -23,7 +23,7 @@
 1. Press [New Task] button
 
 2. Fill the blank:
-    > replace the " to \" for json format safe.
+    > replace the " to \\" for json format safe.
 
     name: "pypi trending projects no1"
 
