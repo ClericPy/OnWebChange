@@ -114,6 +114,13 @@ def gen_rss(data):
   <link>{channel_link}</link>
   <description>{channel_desc}</description>
   <language>{channel_language}</language>
+  <image>
+    <url>{channel_link}/icon.svg</url>
+    <title>{channel_title}</title>
+    <link>{channel_link}</link>
+    <width>32</width>
+    <height>32</height>
+   </image>
   {items_string}
 </channel>
 </rss>
@@ -152,6 +159,17 @@ def rss_handler():
     xml: str = gen_rss(xml_data)
     response.headers['Content-Type'] = 'application/rss+xml; charset=utf-8'
     return xml.encode('utf-8')
+
+
+@app.get("/icon.svg")
+def icon():
+    response.headers['Content-Type'] = 'image/svg+xml'
+    response.headers['Vary'] = 'Accept-Encoding'
+    return r'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g>
+        <path fill="none" d="M0 0h24v24H0z"/>
+        <path d="M3 3c9.941 0 18 8.059 18 18h-3c0-8.284-6.716-15-15-15V3zm0 7c6.075 0 11 4.925 11 11h-3a8 8 0 0 0-8-8v-3zm0 7a4 4 0 0 1 4 4H3v-4z"/>
+    </g>
+</svg>'''
 
 
 if __name__ == "__main__":

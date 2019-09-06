@@ -1,5 +1,14 @@
 # onwebchange
 
+
+
+### Default Web UI
+
+![demo](demo.png)
+
+- [x] Default Console Web UI
+- [x] RSS support
+
 ### Install
 
 > pip install onwebchange -U
@@ -13,10 +22,6 @@
 > bottle
 > objectpath
 > beautifulsoup4
-
-### Default Web UI
-
-![demo](demo.png)
 
 #### Quick start
 
