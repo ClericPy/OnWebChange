@@ -540,6 +540,9 @@ class WebHandler(object):
                  auto_open_browser=True,
                  change_callback=None,
                  app_kwargs=None):
+        self.app_kwargs = app_kwargs or {}
+        self.host = self.app_kwargs.get('host', '127.0.0.1')
+        self.port = self.app_kwargs.get('port', 8080)
         self.loop = asyncio.get_event_loop()
         self.wc = WatchdogCage(
             file_path=file_path,
@@ -549,35 +552,36 @@ class WebHandler(object):
             pretty_json=pretty_json,
             change_callback=change_callback,
             loop=self.loop)
-        self.app = app
-        self.app.wc = self.wc
-        self.app.logger = self.logger
-        self.app.loop_interval = loop_interval
-        self.app.lock = GLOBAL_LOCK
-        self.app.cdn_urls = dict(
+        app.wc = self.wc
+        app.logger = self.logger
+        app.loop_interval = loop_interval
+        app.lock = GLOBAL_LOCK
+        app.cdn_urls = dict(
             VUE_JS_CDN=self.VUE_JS_CDN,
             ELEMENT_CSS_CDN=self.ELEMENT_CSS_CDN,
             ELEMENT_JS_CDN=self.ELEMENT_JS_CDN,
             VUE_RESOURCE_CDN=self.VUE_RESOURCE_CDN,
         )
-        self.app.pid = os.getpid()
+        app.pid = os.getpid()
+        app.console_url = self.console_url
+        self.app = app
         self.auto_open_browser = auto_open_browser
-        self.app_kwargs = app_kwargs or {}
+
+    @property
+    def console_url(self):
+        return f'http://{self.host}:{self.port}'
 
     async def run_server(self):
         # http://127.0.0.1:8080/
-        host, port = self.app_kwargs.get('host',
-                                         '127.0.0.1'), self.app_kwargs.get(
-                                             'port', 8080)
-        console_url = f'http://{host}:{port}'
+
         self.logger.info(
-            f'run_server with kwargs: {self.app_kwargs}, console_url: {console_url}'
+            f'run_server with kwargs: {self.app_kwargs}, console_url: {self.console_url}'
         )
         self.loop.run_in_executor(None, partial(self.app.run,
                                                 **self.app_kwargs))
         if self.auto_open_browser:
             import webbrowser
-            webbrowser.open(console_url)
+            webbrowser.open(self.console_url)
 
         await asyncio.ensure_future(self.wc.run())
 
