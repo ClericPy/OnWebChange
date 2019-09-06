@@ -34,6 +34,8 @@
                 class="el-icon-circle-plus el-icon--right"></i></el-button>
         <el-button @click.native.prevent="updateTask" type="warning">Update Task<i
                 class="el-icon-success el-icon--right"></i></el-button>
+        <el-button @click.native.prevent="testTask" type="primary">Test Task<i
+                class="el-icon-success el-icon--right"></i></el-button>
         <el-button @click.native.prevent="shutdown" type="danger">Shutdown<i class="el-icon-error el-icon--right"></i>
         </el-button>
 
@@ -160,6 +162,17 @@
                         "encoding": null
                     }
                     this.current_task_json = JSON.stringify(data, null, 2)
+                },
+                testTask() {
+                    var data = this.current_task_json
+                    this.$http.post('/test_task', data).then(
+                        r => {
+                            this.openAlert(JSON.stringify(r.body))
+                            this.refreshData()
+                        }, r => {
+                            this.openAlert('Bad request (' + r.status + ') :' + r.statusText)
+                        }
+                    )
                 },
                 updateTask() {
                     var data = this.current_task_json

@@ -66,6 +66,21 @@ def update_task():
     return {'ok': ok}
 
 
+@app.post('/test_task')
+def test_task():
+    # receive a standard task json
+    task_json = request.json
+    try:
+        task = WatchdogTask.load_task(task_json)
+        result = task.sync_test()
+        ok = True
+    except Exception as e:
+        app.wc.logger.error(traceback.format_exc())
+        ok = False
+        result = str(e)
+    return {'result': result, 'ok': ok}
+
+
 @app.get('/remove_task')
 def remove_task():
     # receive a standard task json

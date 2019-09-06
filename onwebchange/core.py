@@ -8,6 +8,7 @@ from functools import partial
 from inspect import getsource
 from threading import Lock
 
+import requests
 from torequests.dummy import Requests
 from torequests.logs import init_logger
 from torequests.utils import curlparse, find_one, flush_print, md5, ttime
@@ -304,6 +305,11 @@ class WatchdogTask(object):
 
     async def test(self):
         result = await self.fetch_once()
+        return result
+
+    def sync_test(self):
+        resp = requests.request(**self.request_args)
+        result = self.get_parse_result(resp)
         return result
 
     def _ensure_function_code(self, func):
