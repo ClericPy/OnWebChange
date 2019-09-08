@@ -74,12 +74,10 @@ def test_task():
     try:
         task = WatchdogTask.load_task(task_json)
         result = task.sync_test()
-        ok = True
     except Exception as e:
         app.wc.logger.error(traceback.format_exc())
-        ok = False
         result = str(e)
-    return {'result': result, 'ok': ok}
+    return result
 
 
 @app.get('/remove_task')
