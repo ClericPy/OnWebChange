@@ -2,4 +2,4 @@
 
 from .core import WatchdogCage, WebHandler
 
-__version__ = '0.1.4'
+__version__ = '0.1.5'
