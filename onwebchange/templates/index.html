@@ -21,37 +21,40 @@
             background-color: #eceff1;
             word-wrap: break-word;
         }
+
+        #buttons {
+            display: flex;
+            flex-direction: row-reverse;
+        }
+
+        #buttons>* {
+            margin-left: 0.5em;
+        }
     </style>
 </head>
 
 <body>
     <div id="app">
+        <div id="buttons">
+            <el-button @click.native.prevent="shutdown" round size="small" type="danger"><i class="el-icon-error"></i>
+                Shutdown
+            </el-button>
 
-        <el-input type="textarea" :autosize="{ minRows: 15, maxRows: 15}" placeholder="choose task from the table"
-            v-model="current_task_json">
-        </el-input>
-        <br>
-        <el-button @click.native.prevent="addTask" type="primary"><i class="el-icon-circle-plus"></i> New
-            Task
-        </el-button>
-        <el-button @click.native.prevent="updateTask" type="warning"><i class="el-icon-upload"></i>
-            Update Task
-        </el-button>
-        <el-button @click.native.prevent="testTask" type="primary" plain><i
-                class="el-icon-refresh-right"></i> Test Task
-        </el-button>
-        |
-        <a href="/rss" target="_blank" rel="noopener noreferrer">
-            <el-button round size="small" type="primary"><i class="el-icon-star-off"></i> RSS
+            <a href="https://github.com/ClericPy/OnWebChange/issues" target="_blank" rel="noopener noreferrer">
+                <el-button round size="small" type="success"><i class="el-icon-s-comment"></i> Feedback
+                </el-button>
+            </a>
+            <a href="/rss" target="_blank" rel="noopener noreferrer">
+                <el-button round size="small" type="warning"><i class="el-icon-star-off"></i> RSS Reader
+                </el-button>
+            </a>
+            <el-button @click.native.prevent="addTask" type="primary" size="small" round><i
+                    class="el-icon-circle-plus"></i>
+                Add
+                Task
             </el-button>
-        </a>
-        <a href="https://github.com/ClericPy/OnWebChange/issues" target="_blank" rel="noopener noreferrer">
-            <el-button round size="small" type="success"><i class="el-icon-s-comment"></i> Feedback
-            </el-button>
-        </a>
-        <el-button @click.native.prevent="shutdown" round size="small" type="danger"><i
-                class="el-icon-error"></i> Shutdown
-        </el-button>
+        </div>
+        <hr>
         <template style="width: 100%; height: 70%;">
 
             <el-table :data="tasks" highlight-current-row @current-change="handleCurrentChange" stripe
@@ -75,7 +78,10 @@
                 </el-table-column>
                 <el-table-column fixed="right" label="Delete" width="120">
                     <template slot-scope="scope">
-                        <el-button @click.native.prevent="removeTask(scope.row.name, tasks)" type="danger"
+                        <el-button @click.native.prevent="showTask(scope.row)" type="warning"
+                            icon="el-icon-edit-outline" circle>
+                        </el-button>
+                        <el-button @click.native.prevent="removeTask(scope.row.name)" type="danger"
                             icon="el-icon-delete" circle>
                         </el-button>
                     </template>
@@ -84,6 +90,78 @@
         </template>
 
 
+        <el-dialog title="Task Info" :visible.sync="dialogFormVisible">
+            <el-form :model="task_form">
+                <el-form-item label="name *">
+                    <el-input v-model="task_form.name" placeholder="unique name" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="request_args *">
+                    <el-input v-model="task_form.request_args" type="textarea" autosize
+                        placeholder="url / curl string / requests args json" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="origin_url">
+                    <el-input v-model="task_form.origin_url" placeholder="null as request_args.url"
+                        autocomplete="off">
+                    </el-input>
+                </el-form-item>
+                <el-form-item label="parser_name">
+                    <el-input v-model="task_form.parser_name"
+                        placeholder="re, css, json, python, defaults to None, use the resp.text" autocomplete="off">
+                    </el-input>
+                </el-form-item>
+                <el-form-item label="operation">
+                    <el-input v-model="task_form.operation" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="value">
+                    <el-input v-model="task_form.value" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="check_interval">
+                    <el-input v-model="task_form.check_interval" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="max_change">
+                    <el-input v-model="task_form.max_change" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="sorting_list">
+                    <el-switch v-model="task_form.sorting_list" active-color="#13ce66" inactive-color="#ff4949">
+                    </el-switch>
+                </el-form-item>
+                <el-form-item label="last_check_time">
+                    <el-input v-model="task_form.last_check_time" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="last_change_time">
+                    <el-input v-model="task_form.last_change_time" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="latest_data">
+                    <el-input v-model="task_form.latest_data" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="check_result_list" style="width: 100%">
+                    <el-table :data="task_form.check_result_list" style="width: 100%">
+                        <el-table-column prop="time" label="time" min-width="100%">
+                        </el-table-column>
+                        <el-table-column prop="data" label="data" min-width="100%">
+                        </el-table-column>
+                    </el-table>
+                </el-form-item>
+                <el-form-item label="change_time_ago">
+                    <el-input v-model="task_form.change_time_ago" autocomplete="off" disabled></el-input>
+                </el-form-item>
+                <el-form-item label="encoding">
+                    <el-input v-model="task_form.encoding" placeholder="can be null string" autocomplete="off">
+                    </el-input>
+                </el-form-item>
+
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="dialogFormVisible = false">Cancel</el-button>
+                <el-button @click.native.prevent="testTask" type="primary" plain><i class="el-icon-refresh-right"></i>
+                    Test Task
+                </el-button>
+                <el-button @click.native.prevent="updateTask" type="warning"><i class="el-icon-upload"></i>
+                    Update Task
+                </el-button>
+            </div>
+        </el-dialog>
+
     </div>
 
     <script>
@@ -91,10 +169,11 @@
             data() {
                 return {
                     tasks: [],
-                    current_task_json: "",
                     currentRow: null,
                     global_last_change_time: null,
                     ok: true,
+                    dialogFormVisible: false,
+                    task_form: {}
                 };
             },
             methods: {
@@ -129,26 +208,12 @@
                             this.check_change()
                         }, r => {
                             this.openAlert('Bad request (' + r.status + ') :' + r.statusText)
+                            this.ok = false
                         }
                     )
                 },
                 onload_function() {
                     this.refreshData()
-                },
-                removeTask(name) {
-                    this.$http.get('/remove_task', {
-                        params: {
-                            name: name
-                        }
-                    }).then(
-                        r => {
-                            this.openAlert(JSON.stringify(r.body))
-                            this.refreshData()
-                        }, r => {
-                            this.openAlert('Bad request (' + r.status + ') :' + r.statusText)
-                        }
-                    )
-
                 },
                 shutdown() {
                     this.$http.get('/shutdown').then(
@@ -162,10 +227,7 @@
                     )
                 },
                 handleCurrentChange(val) {
-                    this.currentRow = val;
-                    if (this.currentRow != null) {
-                        this.current_task_json = JSON.stringify(this.currentRow, null, 2)
-                    }
+                    // this.currentRow = val;
                 },
                 addTask() {
                     var data = {
@@ -174,16 +236,54 @@
                         "parser_name": "",
                         "operation": "",
                         "value": "",
-                        "check_interval": 60,
+                        "check_interval": 300,
                         "max_change": 2,
                         "sorting_list": true,
                         "origin_url": "",
                         "encoding": null
                     }
-                    this.current_task_json = JSON.stringify(data, null, 2)
+                    this.showTask(data)
+                },
+                showTask(item) {
+                    // if (item.request_args.constructor === Object) {
+                    if (item.request_args.url) {
+                        item.request_args = JSON.stringify(item.request_args, null, 2)
+                    }
+                    this.task_form = item
+                    this.dialogFormVisible = true
+                },
+                removeTask(name) {
+                    this.$confirm('Delete?', 'Confirm', {
+                        confirmButtonText: 'OK',
+                        cancelButtonText: 'Cancel',
+                        type: 'warning'
+                    }).then(() => {
+                        this.$http.get('/remove_task', {
+                            params: {
+                                name: name
+                            }
+                        }).then(
+                            r => {
+                                this.refreshData()
+                            }, r => {
+                                this.openAlert('Bad request (' + r.status + ') :' + r.statusText)
+                            }
+                        )
+                        this.$message({
+                            type: 'success',
+                            message: 'Delete success!'
+                        });
+                    }).catch(() => {
+                        this.$message({
+                            type: 'info',
+                            message: 'Delete canceled.'
+                        });
+                    });
+
+
                 },
                 testTask() {
-                    var data = this.current_task_json
+                    var data = this.task_form
                     this.$http.post('/test_task', data).then(
                         r => {
                             this.openAlert(JSON.stringify(r.body))
@@ -194,7 +294,7 @@
                     )
                 },
                 updateTask() {
-                    var data = this.current_task_json
+                    var data = this.task_form
                     this.$http.post('/update_task', data).then(
                         r => {
                             this.openAlert(JSON.stringify(r.body))
@@ -204,7 +304,6 @@
                         }
                     )
                 }
-
             },
             watch: {
 
@@ -218,7 +317,7 @@
         window.onload = app.onload_function
         setInterval(() => {
             app.refreshData()
-        }, 30000);
+        }, 12000);
     </script>
 </body>
 

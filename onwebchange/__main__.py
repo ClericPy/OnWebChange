@@ -8,15 +8,16 @@ from . import __version__
 
 
 def run_server(file_path=None,
-               loop_interval=60,
-               auto_open_browser=True,
-               app_kwargs=None):
+               loop_interval=300,
+               ignore_auto_open_browser=True,
+               host=None,
+               port=None):
     wh = WebHandler(
         app,
         file_path=file_path,
         loop_interval=loop_interval,
-        auto_open_browser=auto_open_browser,
-        app_kwargs=app_kwargs)
+        auto_open_browser=not ignore_auto_open_browser,
+        app_kwargs=dict(host=host, port=port))
     wh.run()
 
 
@@ -26,16 +27,18 @@ def run_server(file_path=None,
 })
 @click.version_option(__version__, "-V", "--version", prog_name="onwebchange")
 @click.option("--file-path", "-f", default=None, help="file_path for storage")
+@click.option("--host", default='127.0.0.1', help="web host")
+@click.option("--port", '-p', default=8080, help="web port")
 @click.option(
-    "--auto-open-browser",
+    "--ignore-auto-open-browser",
     "-a",
     is_flag=True,
-    help="auto_open_browser if set",
+    help="ignore auto_open_browser",
 )
 @click.option(
     "--loop-interval",
     "-i",
-    default=60,
+    default=300,
     help="check loop interval",
 )
 # @click.argument("app_kwargs", nargs=-1, type=click.UNPROCESSED)

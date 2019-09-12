@@ -119,12 +119,14 @@ class WatchdogTask(object):
         self.parser_name = parser_name
         self.operation = operation
         self.value = value
-        self.check_interval = check_interval
+        self.check_interval = int(check_interval)
         self.sorting_list = sorting_list
         self.last_check_time = last_check_time
-        self.max_change = max_change
+        self.max_change = int(max_change)
         self.last_change_time = last_change_time or ttime(0)
         # check_result_list: [{'data': 'xxx', 'time': '2019-08-23 19:27:20'}]
+        if isinstance(check_result_list, str):
+            check_result_list = json.loads(check_result_list)
         self.check_result_list = check_result_list or []
         self.origin_url = origin_url or self.request_args['url']
         self.encoding = encoding or None
@@ -276,6 +278,8 @@ class WatchdogTask(object):
                 }
             elif request_args.startswith('curl'):
                 return curlparse(request_args)
+            elif request_args.startswith('{'):
+                return json.loads(request_args)
             else:
                 raise ValueError(
                     'request_args string should be a curl string or url')
