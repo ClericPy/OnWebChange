@@ -15,6 +15,7 @@ from torequests.utils import curlparse, find_one, flush_print, md5, ttime
 
 SHORTEN_RESULT_MAX_LENGTH = 100
 GLOBAL_LOCK = Lock()
+__version__ = '0.1.8'
 
 
 def _default_shorten_result_function(result):
@@ -379,6 +380,7 @@ class WatchdogCage(object):
         self.pretty_json = pretty_json
         self.change_callback = change_callback
         self.loop = loop
+        self._force_crawl = False
 
     @classmethod
     def refresh_file_path(cls, file_path):
@@ -497,6 +499,10 @@ class WatchdogCage(object):
         while 1:
             changes = []
             ttime_0 = ttime(0)
+            if self._force_crawl:
+                for task in self.tasks.values():
+                    task.last_check_time = '2000-01-01 00:00:00'
+                self._force_crawl = False
             running_tasks = [
                 asyncio.ensure_future(self.run_task(task))
                 for task in self.tasks.values()
@@ -515,6 +521,9 @@ class WatchdogCage(object):
             for _ in range(int(self.loop_interval) + 1, 0, -1):
                 await asyncio.sleep(1)
                 flush_print(_, sep="", end=" ")
+                if self._force_crawl:
+                    self.logger.info('crawl for force_crawl')
+                    break
             flush_print()
 
         self.logger.info('no tasks remaining.')

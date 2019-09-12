@@ -6,7 +6,7 @@
     <meta name="referrer" content="never">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <link rel="shortcut icon" type="image/ico" href="/icon.png" />
-    <title>Watchdog (interval={{loop_interval}}s)</title>
+    <title>Watchdog v{{version}} (interval={{loop_interval}}s)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="{{cdn_urls['VUE_JS_CDN']}}"></script>
     <script src="{{cdn_urls['ELEMENT_JS_CDN']}}"></script>
@@ -22,37 +22,85 @@
             word-wrap: break-word;
         }
 
-        #buttons {
-            display: flex;
-            flex-direction: row-reverse;
-        }
-
         #buttons>* {
             margin-left: 0.5em;
+        }
+
+        div#head {
+            display: flex;
+        }
+
+        div#state {
+            margin: 0.5em;
+            display: flex;
+            font-size: 0.8em;
+        }
+
+        .state-item {
+            margin-right: 1em;
+            border-bottom: 1px dashed gray;
+        }
+
+        div#foot {
+            display: flex;
+        }
+
+        div.fill-flex {
+            flex-grow: 1;
         }
     </style>
 </head>
 
 <body>
     <div id="app">
-        <div id="buttons">
-            <el-button @click.native.prevent="shutdown" round size="small" type="danger"><i class="el-icon-error"></i>
-                Shutdown
-            </el-button>
+        <div id="head">
+            <div class="fill-flex"></div>
+            <div id="state">
+                <span class="state-item">
+                    Version: {{version}}
+                </span>
+                <span class="state-item">
+                    Page Refresh: ${refresh_time} (${autoRefreshInterval/1000}s)
+                </span>
+                <span class="state-item">
+                    Crawl Task: ${tasks[0] == undefined?'no tasks':tasks[0].last_check_time} ({{loop_interval}}s)
+                </span>
+                <span class="state-item">
+                    Status:
+                    <i class="el-icon-loading" v-show="status_icon_flag=='loading'"> ${status}</i>
+                    <i class="el-icon-warning" v-show="status_icon_flag=='warning'"> ${status}</i>
+                    <i class="el-icon-error" v-show="status_icon_flag=='error'"> ${status}</i>
+                    <i class="el-icon-success" v-show="status_icon_flag=='success'"> ${status}</i>
+                </span>
 
-            <a href="https://github.com/ClericPy/OnWebChange/issues" target="_blank" rel="noopener noreferrer">
-                <el-button round size="small" type="success"><i class="el-icon-s-comment"></i> Feedback
+            </div>
+            <div id="buttons">
+                <el-button @click.native.prevent="addTask" type="primary" size="small" round><i
+                        class="el-icon-circle-plus"></i>
+                    Add Task
                 </el-button>
-            </a>
-            <a href="/rss" target="_blank" rel="noopener noreferrer">
-                <el-button round size="small" type="warning"><i class="el-icon-star-off"></i> RSS Reader
+                <el-button @click.native.prevent="refreshData" size="small" round><i class="el-icon-refresh-right"></i>
+                    Refresh Page
                 </el-button>
-            </a>
-            <el-button @click.native.prevent="addTask" type="primary" size="small" round><i
-                    class="el-icon-circle-plus"></i>
-                Add
-                Task
-            </el-button>
+                <el-button @click="crawlTask" size="small" title="Crawl once without interval sleeping." round><i
+                        class="el-icon-download"></i> Force Crawl
+                </el-button>
+                <a href="/rss" target="_blank" rel="noopener noreferrer">
+                    <el-button round size="small" type="warning"><i class="el-icon-star-off"></i> RSS Reader
+                    </el-button>
+                </a>
+
+                <a href="https://github.com/ClericPy/OnWebChange/issues" target="_blank" rel="noopener noreferrer">
+                    <el-button round size="small" type="success"><i class="el-icon-s-comment"></i> Feedback
+                    </el-button>
+                </a>
+
+                <el-button @click.native.prevent="shutdown" round size="small" type="danger"><i
+                        class="el-icon-error"></i>
+                    Shutdown
+                </el-button>
+
+            </div>
         </div>
         <hr>
         <template style="width: 100%; height: 70%;">
@@ -100,8 +148,7 @@
                         placeholder="url / curl string / requests args json" autocomplete="off"></el-input>
                 </el-form-item>
                 <el-form-item label="origin_url">
-                    <el-input v-model="task_form.origin_url" placeholder="null as request_args.url"
-                        autocomplete="off">
+                    <el-input v-model="task_form.origin_url" placeholder="null as request_args.url" autocomplete="off">
                     </el-input>
                 </el-form-item>
                 <el-form-item label="parser_name">
@@ -165,6 +212,23 @@
     </div>
 
     <script>
+        Date.prototype.Format = function (fmt) {
+            var o = {
+                "M+": this.getMonth() + 1, //月份 
+                "d+": this.getDate(), //日 
+                "H+": this.getHours(), //小时 
+                "m+": this.getMinutes(), //分 
+                "s+": this.getSeconds(), //秒 
+                "q+": Math.floor((this.getMonth() + 3) / 3), //季度 
+                "S": this.getMilliseconds() //毫秒 
+            };
+            if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1
+                .length));
+            for (var k in o)
+                if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[
+                    k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+            return fmt;
+        }
         var Main = {
             data() {
                 return {
@@ -173,7 +237,11 @@
                     global_last_change_time: null,
                     ok: true,
                     dialogFormVisible: false,
-                    task_form: {}
+                    task_form: {},
+                    status_icon_flag: 'loading',
+                    status: 'loading',
+                    refresh_time: '',
+                    autoRefreshInterval: 60000
                 };
             },
             methods: {
@@ -195,19 +263,25 @@
                     }
                     if (current_change_time > this.global_last_change_time) {
                         this.global_last_change_time = current_change_time
-                        alert("New change.")
+                        this.status = this.tasks[0].name + ' changed at ' + current_change_time
+                        this.status_icon_flag = 'warning'
+                        alert(this.tasks[0].name + " changed.")
                     }
                 },
                 refreshData() {
                     if (this.ok != true) {
                         return
                     }
+                    this.refresh_time = new Date().Format("yyyy-MM-dd HH:mm:ss")
                     this.$http.get('/get_task_list').then(
                         r => {
                             this.tasks = r.body.tasks
+                            this.status = 'online'
+                            this.status_icon_flag = 'success'
                             this.check_change()
                         }, r => {
-                            this.openAlert('Bad request (' + r.status + ') :' + r.statusText)
+                            this.status = 'Bad request (' + r.status + ') :' + r.statusText
+                            this.status_icon_flag = 'error'
                             this.ok = false
                         }
                     )
@@ -219,15 +293,14 @@
                     this.$http.get('/shutdown').then(
                         r => {
                             this.openAlert('server shutdown.')
-                            this.ok = false
                         }, r => {
                             this.openAlert('server shutdown.')
-                            this.ok = false
                         }
                     )
                 },
                 handleCurrentChange(val) {
                     // this.currentRow = val;
+                    this.refreshData()
                 },
                 addTask() {
                     var data = {
@@ -266,7 +339,9 @@
                             r => {
                                 this.refreshData()
                             }, r => {
-                                this.openAlert('Bad request (' + r.status + ') :' + r.statusText)
+                                this.status = 'removeTask failed, Bad request (' + r.status + ') :' + r
+                                    .statusText
+                                this.status_icon_flag = 'error'
                             }
                         )
                         this.$message({
@@ -289,7 +364,21 @@
                             this.openAlert(JSON.stringify(r.body))
                             this.refreshData()
                         }, r => {
-                            this.openAlert('Bad request (' + r.status + ') :' + r.statusText)
+                            this.status = 'testTask failed, Bad request (' + r.status + ') :' + r.statusText
+                            this.status_icon_flag = 'error'
+                        }
+                    )
+                },
+                crawlTask() {
+                    this.$http.get('/crawl_once').then(
+                        r => {
+                            this.openAlert(JSON.stringify(r.body))
+                            setInterval(() => {
+                                app.refreshData()
+                            }, 10000);
+                        }, r => {
+                            this.status = 'testTask failed, Bad request (' + r.status + ') :' + r.statusText
+                            this.status_icon_flag = 'error'
                         }
                     )
                 },
@@ -300,7 +389,8 @@
                             this.openAlert(JSON.stringify(r.body))
                             this.refreshData()
                         }, r => {
-                            this.openAlert('Bad request (' + r.status + ') :' + r.statusText)
+                            this.status = 'updateTask failed, Bad request (' + r.status + ') :' + r.statusText
+                            this.status_icon_flag = 'error'
                         }
                     )
                 }
@@ -317,7 +407,7 @@
         window.onload = app.onload_function
         setInterval(() => {
             app.refreshData()
-        }, 12000);
+        }, app.autoRefreshInterval);
     </script>
 </body>
 

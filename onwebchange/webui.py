@@ -8,7 +8,7 @@ import traceback
 from bottle import Bottle, request, response, template
 from torequests.utils import escape, ptime, time, timeago, ttime
 
-from .core import GLOBAL_LOCK, WatchdogTask
+from .core import GLOBAL_LOCK, WatchdogTask, __version__
 
 # app.wc = xxx
 app = Bottle()
@@ -19,7 +19,10 @@ index_tpl_path = str(pathlib.Path(__file__).parent / 'templates').replace(
 @app.get('/')
 def index():
     return template(
-        index_tpl_path, cdn_urls=app.cdn_urls, loop_interval=app.loop_interval)
+        index_tpl_path,
+        cdn_urls=app.cdn_urls,
+        loop_interval=app.loop_interval,
+        version=__version__)
 
 
 @app.get('/shutdown')
@@ -27,6 +30,12 @@ def shutdown():
     with GLOBAL_LOCK:
         app.logger.warning('shuting down.')
         os.kill(app.pid, 9)
+
+
+@app.get('/crawl_once')
+def crawl_once():
+    app.wc._force_crawl = True
+    return {'ok': True}
 
 
 @app.get('/get_task')
