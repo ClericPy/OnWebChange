@@ -1,13 +1,44 @@
 # onwebchange
 
+- [x] Default Console Web UI
+- [x] RSS support
+- [x] Release on pypi
 
+#### Quick start
+
+> python3 -m onwebchange
+>
+> > python3 -m onwebchange -f wc.config -i 300 --host=127.0.0.1 -p 8080
+
+1. Press [AddTask] button
+
+2. Fill the blank:
+
+   name: "pypi trending projects no1"
+
+   request_args: "https://pypi.org/"
+
+   parser_name: "css"
+
+   operation: "#content > div:nth-child(4) > div > div:nth-child(1) > ul > li:nth-child(1) > a > h3 > span.package-snippet__name"
+
+   value: "$text"
+
+   check_interval: 300
+
+   max_change: 10
+
+3. Press [Update Task] button
+
+4. Subscribe RSS from chrome RSS reader extension
 
 ### Default Web UI
 
-![demo](demo.png)
+![demo1](demo1.png)
 
-- [x] Default Console Web UI
-- [x] RSS support
+![demo2](demo2.png)
+
+![demo2](demo3.png)
 
 ### Install
 
@@ -22,29 +53,6 @@
 > bottle
 > objectpath
 > beautifulsoup4
-
-#### Quick start
-
-1. Press [New Task] button
-
-2. Fill the blank:
-    > replace the " to \\" for json format safe.
-
-    name: "pypi trending projects no1"
-
-    request_args: "https://pypi.org/"
-
-    parser_name: "css"
-
-    operation: "#content > div:nth-child(4) > div > div:nth-child(1) > ul > li:nth-child(1) > a > h3 > span.package-snippet__name"
-
-    value: "$text"
-
-    check_interval: 300
-    
-    max_change: 10
-
-3. Press [Update Task] button
 
 ### example
 
