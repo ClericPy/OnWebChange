@@ -546,7 +546,7 @@ class WebHandler(object):
                  app_kwargs=None):
         self.app_kwargs = app_kwargs or {}
         self.host = self.app_kwargs.get('host', '127.0.0.1')
-        self.port = self.app_kwargs.get('port', 8080)
+        self.port = self.app_kwargs.get('port', 9988)
         self.loop = asyncio.get_event_loop()
         self.wc = WatchdogCage(
             file_path=file_path,
@@ -576,7 +576,7 @@ class WebHandler(object):
         return f'http://{self.host}:{self.port}'
 
     async def run_server(self):
-        # http://127.0.0.1:8080/
+        # http://127.0.0.1:9988/
 
         self.logger.info(
             f'run_server with kwargs: {self.app_kwargs}, console_url: {self.console_url}'

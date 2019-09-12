@@ -28,7 +28,7 @@ def run_server(file_path=None,
 @click.version_option(__version__, "-V", "--version", prog_name="onwebchange")
 @click.option("--file-path", "-f", default=None, help="file_path for storage")
 @click.option("--host", default='127.0.0.1', help="web host")
-@click.option("--port", '-p', default=8080, help="web port")
+@click.option("--port", '-p', default=9988, help="web port")
 @click.option(
     "--ignore-auto-open-browser",
     "-a",
