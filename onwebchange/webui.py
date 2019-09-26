@@ -5,7 +5,7 @@ import os
 import pathlib
 import traceback
 
-from bottle import Bottle, request, response, template
+from bottle import Bottle, request, response, template, HTTPError
 from torequests.utils import escape, ptime, time, timeago, ttime
 
 from .core import GLOBAL_LOCK, WatchdogTask, __version__
@@ -16,7 +16,27 @@ index_tpl_path = str(pathlib.Path(__file__).parent / 'templates').replace(
     '\\', '/') + '/index.html'
 
 
+def check_login(realm="private", text="Access denied"):
+
+    def decorator(func):
+
+        def wrapper(*a, **ka):
+            if all((app.wc.username, app.wc.password)):
+                username, password = request.auth or (None, None)
+                if username != app.wc.username or password != app.wc.password:
+                    err = HTTPError(401, text)
+                    err.add_header('WWW-Authenticate',
+                                   'Basic realm="%s"' % realm)
+                    return err
+            return func(*a, **ka)
+
+        return wrapper
+
+    return decorator
+
+
 @app.get('/')
+@check_login()
 def index():
     return template(
         index_tpl_path,
@@ -26,6 +46,7 @@ def index():
 
 
 @app.get('/shutdown')
+@check_login()
 def shutdown():
     with GLOBAL_LOCK:
         app.logger.warning('shuting down.')
@@ -33,18 +54,21 @@ def shutdown():
 
 
 @app.get('/crawl_once')
+@check_login()
 def crawl_once():
     app.wc._force_crawl = True
     return {'ok': True}
 
 
 @app.get('/get_task')
+@check_login()
 def get_task():
     task_name = request.GET.get('name')
     return app.wc.get_task(task_name)
 
 
 @app.get('/get_task_list')
+@check_login()
 def get_task_list():
     task_name = request.GET.get('name')
     result = app.wc.get_task(task_name)
@@ -64,19 +88,25 @@ def get_task_list():
 
 
 @app.post('/update_task')
+@check_login()
 def update_task():
+    # for add task or update task
     # receive a standard task json
     task_json = request.json
+    result = {}
     try:
         task = WatchdogTask.load_task(task_json)
         ok = app.wc.update_task(task)
-    except Exception:
+    except Exception as err:
         app.wc.logger.error(traceback.format_exc())
         ok = False
-    return {'ok': ok}
+        result['error'] = err
+    result['ok'] = ok
+    return result
 
 
 @app.post('/test_task')
+@check_login()
 def test_task():
     # receive a standard task json
     task_json = request.json
@@ -90,6 +120,7 @@ def test_task():
 
 
 @app.get('/remove_task')
+@check_login()
 def remove_task():
     # receive a standard task json
     task_name = request.GET.get('name')
@@ -136,6 +167,7 @@ def gen_rss(data):
 
 
 @app.get("/rss")
+@check_login()
 def rss_handler():
     lang = request.GET.get('lang') or 'zh-cn'
     xml_data: dict = {
@@ -170,6 +202,7 @@ def rss_handler():
 
 
 @app.get("/icon.png")
+@check_login()
 def icon():
     response.headers['Content-Type'] = 'image/png'
     response.headers['Vary'] = 'Accept-Encoding'

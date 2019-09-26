@@ -15,7 +15,7 @@ from torequests.utils import curlparse, find_one, flush_print, md5, ttime
 
 SHORTEN_RESULT_MAX_LENGTH = 100
 GLOBAL_LOCK = Lock()
-__version__ = '0.1.8'
+__version__ = '0.1.9'
 
 
 def _default_shorten_result_function(result):
@@ -49,7 +49,7 @@ class WatchdogTask(object):
                  sorting_list=True,
                  check_interval=300,
                  last_check_time=None,
-                 max_change=5,
+                 max_change=1,
                  check_result_list=None,
                  origin_url=None,
                  encoding=None,
@@ -305,6 +305,10 @@ class WatchdogTask(object):
 
     async def fetch_once(self):
         resp = await self.get_resp()
+        if not resp:
+            error = f'{self.name} request failed: {resp.text}'
+            self.logger.error(error)
+            raise requests.HTTPError(error)
         result = self.get_parse_result(resp)
         return result
 
@@ -370,7 +374,8 @@ class WatchdogCage(object):
                  loop_interval=300,
                  pretty_json=True,
                  change_callback=None,
-                 loop=None):
+                 loop=None,
+                 quota=20):
         self.file_path = file_path or self.default_file_path
         # self.tasks: dict with key=task_name, value=WatchdogTask obj
         self.tasks = self.load_tasks_from_file(self.file_path)
@@ -380,7 +385,14 @@ class WatchdogCage(object):
         self.pretty_json = pretty_json
         self.change_callback = change_callback
         self.loop = loop
+        self.quota = quota
         self._force_crawl = False
+
+    def check_quota(self):
+        if len(self.tasks) >= self.quota:
+            raise IOError(
+                f'The quota has been exceeded {len(self.tasks)} / {self.quota}.'
+            )
 
     @classmethod
     def refresh_file_path(cls, file_path):
@@ -412,6 +424,7 @@ class WatchdogCage(object):
             self.save_tasks()
 
     def add_task(self, task):
+        self.check_quota()
         if task.name in self.tasks:
             self.logger.error(f'{task} has existed, please rename/remove it.')
             return False
@@ -420,6 +433,7 @@ class WatchdogCage(object):
         return True
 
     def update_task(self, task):
+        self.check_quota()
         ok = task.name in self.tasks
         self.tasks[task.name] = task
         self.check_auto_save()
@@ -463,7 +477,10 @@ class WatchdogCage(object):
             return tasks_dict
 
     async def run_task(self, task):
-        result = await task.fetch_once()
+        try:
+            result = await task.fetch_once()
+        except requests.HTTPError as err:
+            return err
         if result:
             shorten_result = self.shorten_result_function(result)
         else:
@@ -479,7 +496,7 @@ class WatchdogCage(object):
             task.update_last_change_time()
             if self.change_callback:
                 if asyncio.iscoroutinefunction(self.change_callback):
-                    self.change_callback(task)
+                    await self.change_callback(task)
                 elif callable(self.change_callback):
                     await self.loop.run_in_executor(None, self.change_callback,
                                                     task)
@@ -552,7 +569,9 @@ class WebHandler(object):
                  pretty_json=True,
                  auto_open_browser=True,
                  change_callback=None,
-                 app_kwargs=None):
+                 app_kwargs=None,
+                 username='',
+                 password=''):
         self.app_kwargs = app_kwargs or {}
         self.host = self.app_kwargs.get('host', '127.0.0.1')
         self.port = self.app_kwargs.get('port', 9988)
@@ -565,6 +584,8 @@ class WebHandler(object):
             pretty_json=pretty_json,
             change_callback=change_callback,
             loop=self.loop)
+        self.wc.username = username
+        self.wc.password = password
         app.wc = self.wc
         app.logger = self.logger
         app.loop_interval = loop_interval
