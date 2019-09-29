@@ -5,8 +5,8 @@ import os
 import pathlib
 import traceback
 
-from bottle import Bottle, request, response, template, HTTPError
-from torequests.utils import escape, ptime, time, timeago, ttime
+from bottle import Bottle, request, response, template, HTTPError, redirect
+from torequests.utils import escape, ptime, time, timeago, ttime, md5
 
 from .core import GLOBAL_LOCK, WatchdogTask, __version__
 
@@ -167,9 +167,19 @@ def gen_rss(data):
 
 
 @app.get("/rss")
-@check_login()
 def rss_handler():
     lang = request.GET.get('lang') or 'zh-cn'
+    token = request.GET.get('token')
+    # redirect for token
+    if all(
+        (app.wc.username,
+         app.wc.password)) and token != md5([app.wc.username, app.wc.password]):
+        username, password = request.auth or (None, None)
+        if username == app.wc.username or password == app.wc.password:
+            token = md5([username, password])
+            redirect('/rss?token=' + token, 302)
+        else:
+            redirect('/', 302)
     xml_data: dict = {
         'channel': {
             'title': 'Watchdog',
