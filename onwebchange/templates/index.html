@@ -72,7 +72,12 @@
                     <i class="el-icon-error" v-show="status_icon_flag=='error'"> ${status}</i>
                     <i class="el-icon-success" v-show="status_icon_flag=='success'"> ${status}</i>
                 </span>
-
+                <span class="state-item">
+                    <el-select v-model="current_tag" placeholder="Tags" @change="jumpForTag" size="mini">
+                        <el-option v-for="item in tags" :key="item.value" :label="item.label" :value="item.value">
+                        </el-option>
+                    </el-select>
+                </span>
             </div>
             <div id="buttons">
                 <el-button @click.native.prevent="addTask" type="primary" size="small" round><i
@@ -85,7 +90,7 @@
                 <el-button @click="crawlTask" size="small" title="Crawl once without interval sleeping." round><i
                         class="el-icon-download"></i> Force Crawl
                 </el-button>
-                <a href="/rss" target="_blank" rel="noopener noreferrer">
+                <a href="/rss?tag={{tag}}" target="_blank" rel="noopener noreferrer">
                     <el-button round size="small" type="warning"><i class="el-icon-star-off"></i> RSS Reader
                     </el-button>
                 </a>
@@ -107,9 +112,11 @@
 
             <el-table :data="tasks" highlight-current-row @current-change="handleCurrentChange" stripe
                 style="width: 100%; height: 100%;">
-                <el-table-column prop="name" label="name" width="180">
+                <el-table-column prop="tag" label="Tag" width="90">
                 </el-table-column>
-                <el-table-column prop="check_interval" label="check_interval" width="180">
+                <el-table-column prop="name" label="Name" width="180">
+                </el-table-column>
+                <el-table-column prop="check_interval" label="check_interval(s)" width="180">
                 </el-table-column>
                 <el-table-column prop="last_check_time" label="last_check_time">
                 </el-table-column>
@@ -124,7 +131,7 @@
                 </el-table-column>
                 <el-table-column prop="change_time_ago" label="change_time_ago">
                 </el-table-column>
-                <el-table-column fixed="right" label="Delete" width="120">
+                <el-table-column fixed="right" label="Operation" width="120">
                     <template slot-scope="scope">
                         <el-button @click.native.prevent="showTask(scope.row)" type="warning"
                             icon="el-icon-edit-outline" circle>
@@ -142,6 +149,10 @@
             <el-form :model="task_form">
                 <el-form-item label="name *">
                     <el-input v-model="task_form.name" placeholder="unique name" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="tag">
+                    <el-input v-model="task_form.tag" placeholder="set the tag for filter" autocomplete="off">
+                    </el-input>
                 </el-form-item>
                 <el-form-item label="request_args *">
                     <el-input v-model="task_form.request_args" type="textarea" autosize
@@ -241,7 +252,9 @@
                     status_icon_flag: 'loading',
                     status: 'loading',
                     refresh_time: '',
-                    autoRefreshInterval: 60000
+                    autoRefreshInterval: 60000,
+                    tags: [],
+                    current_tag: '{{tag}}',
                 };
             },
             methods: {
@@ -273,9 +286,10 @@
                         return
                     }
                     this.refresh_time = new Date().Format("yyyy-MM-dd HH:mm:ss")
-                    this.$http.get('/get_task_list').then(
+                    this.$http.get('/get_task_list?tag=' + this.current_tag).then(
                         r => {
                             this.tasks = r.body.tasks
+                            this.tags = r.body.all_tags
                             this.status = 'online'
                             this.status_icon_flag = 'success'
                             this.check_change()
@@ -356,6 +370,9 @@
                     });
 
 
+                },
+                jumpForTag(tag) {
+                    window.location.href = '/?tag=' + tag
                 },
                 testTask() {
                     var data = this.task_form

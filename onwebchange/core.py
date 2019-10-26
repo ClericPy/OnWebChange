@@ -15,7 +15,7 @@ from torequests.utils import curlparse, find_one, flush_print, md5, ttime
 
 SHORTEN_RESULT_MAX_LENGTH = 100
 GLOBAL_LOCK = Lock()
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 
 def _default_shorten_result_function(result):
@@ -46,6 +46,7 @@ class WatchdogTask(object):
                  parser_name=None,
                  operation=None,
                  value=None,
+                 tag='default',
                  sorting_list=True,
                  check_interval=300,
                  last_check_time=None,
@@ -120,6 +121,7 @@ class WatchdogTask(object):
         self.parser_name = parser_name
         self.operation = operation
         self.value = value
+        self.tag = tag
         self.check_interval = int(check_interval)
         self.sorting_list = sorting_list
         self.last_check_time = last_check_time
@@ -342,6 +344,7 @@ class WatchdogTask(object):
             'parser_name': self.parser_name,
             'operation': self.operation,
             'value': self.value,
+            'tag': self.tag,
             'check_interval': self.check_interval,
             'sorting_list': self.sorting_list,
             'last_check_time': self.last_check_time,

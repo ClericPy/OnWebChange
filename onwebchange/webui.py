@@ -38,11 +38,13 @@ def check_login(realm="private", text="Access denied"):
 @app.get('/')
 @check_login()
 def index():
+    tag = request.GET.get('tag') or ''
     return template(
         index_tpl_path,
         cdn_urls=app.cdn_urls,
         loop_interval=app.loop_interval,
-        version=__version__)
+        version=__version__,
+        tag=tag)
 
 
 @app.get('/shutdown')
@@ -71,11 +73,15 @@ def get_task():
 @check_login()
 def get_task_list():
     task_name = request.GET.get('name')
+    tag = request.GET.get('tag') or ''
     result = app.wc.get_task(task_name)
+    all_tags = set()
     result_list = sorted(
-        result.values(),
+        filter(lambda item: item.get('tag') == tag if (all_tags.add(item.get('tag'))) or tag else True, result.values()),
         key=lambda item: item.get('last_change_time', '2000-01-01 00:00:00'),
         reverse=True)
+    all_tags = sorted(({'value': tag, 'label': tag} for tag in all_tags), key=lambda item: item['label'])
+    all_tags.insert(0, {'value': '', 'label': 'All'})
     for item in result_list:
         item['latest_data'] = item['check_result_list'][0]['data'] if item[
             'check_result_list'] else ''
@@ -84,7 +90,7 @@ def get_task_list():
                 time.time() - ptime(item['check_result_list'][0]['time']),
                 accuracy=1,
                 format=1)) if item['check_result_list'] else ''
-    return {'ok': True, 'tasks': result_list}
+    return {'ok': True, 'tasks': result_list, 'all_tags': all_tags}
 
 
 @app.post('/update_task')
@@ -169,6 +175,7 @@ def gen_rss(data):
 @app.get("/rss")
 def rss_handler():
     lang = request.GET.get('lang') or 'zh-cn'
+    tag = request.GET.get('tag') or ''
     token = request.GET.get('token')
     # redirect for token
     if all(
@@ -177,7 +184,7 @@ def rss_handler():
         username, password = request.auth or (None, None)
         if username == app.wc.username or password == app.wc.password:
             token = md5([username, password])
-            redirect('/rss?token=' + token, 302)
+            redirect(f'/rss?token={token}&tag={tag}', 302)
         else:
             redirect('/', 302)
     xml_data: dict = {
@@ -194,6 +201,8 @@ def rss_handler():
             app.wc.tasks.values(),
             key=lambda item: item.last_change_time or t0,
             reverse=True):
+        if tag and task.tag != tag:
+            continue
         # 当日 0 点发布前一天的结果
         pubDate: str = ttime(
             ptime(task.last_change_time), fmt='%a, %d %b %Y %H:%M:%S')
