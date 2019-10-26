@@ -216,7 +216,7 @@ def rss_handler():
         }
         xml_data['items'].append(item)
     xml: str = gen_rss(xml_data)
-    response.headers['Content-Type'] = 'application/rss+xml; charset=utf-8'
+    response.headers['Content-Type'] = 'text/xml; charset=utf-8'
     return xml.encode('utf-8')
 
 
