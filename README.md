@@ -3,34 +3,41 @@
 - [x] Default Console Web UI
 - [x] RSS support
 - [x] Release on pypi
+- [x] Add **tag** filter, to  distinguish all the RSS sites.
 
 #### Quick start
 
+1. install
+
 > python3 -m onwebchange
->
-> > python3 -m onwebchange -f wc.config -i 300 --host=127.0.0.1 -p 8080
 
-1. Press [AddTask] button
+2. add shell command  to systemd / supervisor.
+   1. Run with username & password.
 
-2. Fill the blank:
+> python3 -m onwebchange -f wc.config -i 300 --host=127.0.0.1 -p 8080 --username=admin --password=admin
 
-   name: "pypi trending projects no1"
+3. Add Tasks
+   1. Press [AddTask] button
 
-   request_args: "https://pypi.org/"
+   2. Fill the blank:
 
-   parser_name: "css"
+      name: "pypi trending projects no1"
 
-   operation: "#content > div:nth-child(4) > div > div:nth-child(1) > ul > li:nth-child(1) > a > h3 > span.package-snippet__name"
+      request_args: "https://pypi.org/"
 
-   value: "$text"
+      parser_name: "css"
 
-   check_interval: 300
+      operation: "#content > div:nth-child(4) > div > div:nth-child(1) > ul > li:nth-child(1) > a > h3 > span.package-snippet__name"
 
-   max_change: 10
+      value: "$text"
 
-3. Press [Update Task] button
+      check_interval: 300
 
-4. Subscribe RSS from chrome RSS reader extension
+      max_change: 10
+
+   3. Press [Update Task] button
+
+   4. Subscribe RSS from chrome RSS reader extension
 
 ### Default Web UI
 

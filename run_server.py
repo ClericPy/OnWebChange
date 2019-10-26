@@ -11,5 +11,5 @@ if __name__ == "__main__":
         app_kwargs={'port': 9988},
         username='',
         password='')
-    # python3 -m onwebchange -f wc.config -i 300 --host=127.0.0.1 -p 8080
+    # python3 -m onwebchange -f wc.config -i 300 --host=127.0.0.1 -p 8080 --username=admin --password=admin
     wh.run()
