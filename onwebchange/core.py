@@ -3,6 +3,7 @@ import asyncio
 import json
 import os
 import pathlib
+import re
 import time
 from functools import partial
 from inspect import getsource
@@ -15,7 +16,7 @@ from torequests.utils import curlparse, find_one, flush_print, md5, ttime
 
 SHORTEN_RESULT_MAX_LENGTH = 100
 GLOBAL_LOCK = Lock()
-__version__ = '0.2.2'
+__version__ = '0.2.3'
 
 
 def _default_shorten_result_function(result):
@@ -47,6 +48,7 @@ class WatchdogTask(object):
                  operation=None,
                  value=None,
                  tag='default',
+                 work_hours='0, 24',
                  sorting_list=True,
                  check_interval=300,
                  last_check_time=None,
@@ -67,6 +69,10 @@ class WatchdogTask(object):
             :type operation: str, optional
             :param value: value operation for the parser, defaults to None
             :type value: str, optional
+            :param tag: tag for filter, defaults to "default"
+            :type tag: str, optional
+            :param work_hours: work_hours of the crawler, defaults to '0, 24', means range(0, 24)
+            :type work_hours: str, optional
             :param sorting_list: whether sorting the list of result from `css or other parsers`, defaults to True
             :type sorting_list: bool, optional
             :param check_interval: check_interval, defaults to 300 seconds
@@ -122,6 +128,7 @@ class WatchdogTask(object):
         self.operation = operation
         self.value = value
         self.tag = tag
+        self.work_hours = self.ensure_work_hours(work_hours)
         self.check_interval = int(check_interval)
         self.sorting_list = sorting_list
         self.last_check_time = last_check_time
@@ -141,6 +148,16 @@ class WatchdogTask(object):
         if not cls.req:
             cls.req = Requests(
                 default_host_frequency=cls.DEFAULT_HOST_FREQUENCY)
+
+    @staticmethod
+    def ensure_work_hours(work_hours):
+        work_hours = re.findall(r'\d+', work_hours or '0, 24')[:2]
+        return ', '.join(work_hours)
+
+    def check_work_hours(self, current_hour=None):
+        current_hour = current_hour or int(time.strftime('%H'))
+        return current_hour in range(*(int(i)
+                                       for i in self.work_hours.split(', ')))
 
     @property
     def is_finished(self):
@@ -345,6 +362,7 @@ class WatchdogTask(object):
             'operation': self.operation,
             'value': self.value,
             'tag': self.tag,
+            'work_hours': self.work_hours,
             'check_interval': self.check_interval,
             'sorting_list': self.sorting_list,
             'last_check_time': self.last_check_time,
@@ -523,11 +541,13 @@ class WatchdogCage(object):
                 for task in self.tasks.values():
                     task.last_check_time = '2000-01-01 00:00:00'
                 self._force_crawl = False
+            current_hour = int(time.strftime('%H'))
             running_tasks = [
                 asyncio.ensure_future(self.run_task(task))
                 for task in self.tasks.values()
-                if ttime(time.time() - task.check_interval) > (
-                    task.last_check_time or ttime_0)
+                if task.check_work_hours(current_hour=current_hour) and
+                ttime(time.time() - task.check_interval) >
+                (task.last_check_time or ttime_0)
             ]
             self.logger.info(
                 f'{len(running_tasks)} tasks checking for interval overdue.')

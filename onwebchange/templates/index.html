@@ -118,6 +118,8 @@
                 </el-table-column>
                 <el-table-column prop="check_interval" label="check_interval(s)" width="180">
                 </el-table-column>
+                <el-table-column prop="work_hours" label="work_hours" width="120">
+                </el-table-column>
                 <el-table-column prop="last_check_time" label="last_check_time">
                 </el-table-column>
                 <el-table-column prop="last_change_time" label="last_change_time">
@@ -175,6 +177,11 @@
                 </el-form-item>
                 <el-form-item label="check_interval">
                     <el-input v-model="task_form.check_interval" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="work_hours">
+                    <el-input v-model="task_form.work_hours" placeholder="set the work_hours for crawler"
+                        autocomplete="off">
+                    </el-input>
                 </el-form-item>
                 <el-form-item label="max_change">
                     <el-input v-model="task_form.max_change" autocomplete="off"></el-input>
