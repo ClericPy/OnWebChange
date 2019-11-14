@@ -116,7 +116,6 @@ class WatchdogTask(object):
                     ! function name should always be `parse` if value is None,
                         or use `value` as the function name.
                     `operation can be a function object.`
-                    operation = lambda resp: resp.text
                     operation = r'''
                     def parse(resp):
                         return md5(resp.text)
