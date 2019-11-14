@@ -14,9 +14,10 @@ from torequests.dummy import Requests
 from torequests.logs import init_logger
 from torequests.utils import curlparse, find_one, flush_print, md5, ttime
 
-SHORTEN_RESULT_MAX_LENGTH = 100
+# 140 like weibo
+SHORTEN_RESULT_MAX_LENGTH = 140
 GLOBAL_LOCK = Lock()
-__version__ = '0.2.3'
+__version__ = '0.2.4'
 
 
 def _default_shorten_result_function(result):
@@ -115,7 +116,6 @@ class WatchdogTask(object):
                     ! function name should always be `parse` if value is None,
                         or use `value` as the function name.
                     `operation can be a function object.`
-                    operation = lambda resp: resp.text
                     operation = r'''
                     def parse(resp):
                         return md5(resp.text)

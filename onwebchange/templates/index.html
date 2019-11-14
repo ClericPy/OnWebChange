@@ -147,13 +147,14 @@
         </template>
 
 
-        <el-dialog title="Task Info" :visible.sync="dialogFormVisible">
+        <el-dialog title="Task Info" :visible.sync="dialogFormVisible" :close-on-click-modal="false">
             <el-form :model="task_form">
                 <el-form-item label="name *">
                     <el-input v-model="task_form.name" placeholder="unique name" autocomplete="off"></el-input>
                 </el-form-item>
                 <el-form-item label="tag">
-                    <el-input v-model="task_form.tag" placeholder="set the tag for filter" autocomplete="off">
+                    <el-input v-model="task_form.tag" placeholder="set the tag for group filter, defaults to 'default'"
+                        autocomplete="off">
                     </el-input>
                 </el-form-item>
                 <el-form-item label="request_args *">
@@ -161,16 +162,17 @@
                         placeholder="url / curl string / requests args json" autocomplete="off"></el-input>
                 </el-form-item>
                 <el-form-item label="origin_url">
-                    <el-input v-model="task_form.origin_url" placeholder="null as request_args.url" autocomplete="off">
+                    <el-input v-model="task_form.origin_url" placeholder="defaults to request_args.url"
+                        autocomplete="off">
                     </el-input>
                 </el-form-item>
                 <el-form-item label="parser_name">
-                    <el-input v-model="task_form.parser_name"
-                        placeholder="re, css, json, python, defaults to None, use the resp.text" autocomplete="off">
+                    <el-input v-model="task_form.parser_name" placeholder="re, css, json, python, defaults to resp.text"
+                        autocomplete="off">
                     </el-input>
                 </el-form-item>
                 <el-form-item label="operation">
-                    <el-input v-model="task_form.operation" autocomplete="off"></el-input>
+                    <el-input v-model="task_form.operation" type="textarea" autosize autocomplete="off"></el-input>
                 </el-form-item>
                 <el-form-item label="value">
                     <el-input v-model="task_form.value" autocomplete="off"></el-input>

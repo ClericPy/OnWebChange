@@ -4,6 +4,25 @@
 - [x] RSS support
 - [x] Release on pypi
 - [x] Add **tag** filter, to  distinguish all the RSS sites.
+- [ ] Add .pyz release for one-key-deploy.
+
+
+
+### Install
+
+> pip install onwebchange -U
+
+
+
+### Requirements
+
+> torequests
+> click
+> bottle
+> objectpath
+> beautifulsoup4
+
+
 
 #### Quick start
 
@@ -47,22 +66,10 @@
 
 ![demo2](demo3.png)
 
-### Install
+### Example
 
-> pip install onwebchange -U
-
-
-
-### Requirements
-
-> torequests
-> click
-> bottle
-> objectpath
-> beautifulsoup4
-
-### example
-
+> # run as main package with command
+>
 > python3 -m onwebchange -f wc.config -i 300 -a
 
 or
@@ -85,6 +92,52 @@ if __name__ == "__main__":
 ```
 
 
+
+### Parser examples
+
+1. regex
+
+   1. parser_name: re
+   2. operation: class="(.*?)"
+   3. value: $1
+
+2. css selector for attribute
+
+   1. parser_name: css
+   2. operation: #J_all_item_910789
+   3. value: @class
+      1. **value also can be:**
+         1. $string
+            1. list of outer HTML
+         2. $text
+            1. list of node.text
+         3. $get_text
+            1. list of node.get_text()
+
+3. json (ObjectPath).
+
+   1. >  https://httpbin.org/get
+      >
+      > ​	with json-handle chrome extention.
+
+   2. parser_name: json
+
+   3. operation: $.headers["Accept-Encoding"]
+
+   4. value: $text
+
+4. python
+
+   1. parser_name: python
+
+   2. operation:
+
+      1. ```python
+         def parse(resp):
+             return resp.text[:10]
+         ```
+
+   3. value as null
 
 ### New Task template
 

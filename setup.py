@@ -3,14 +3,14 @@
 import codecs
 import sys
 
-from setuptools import find_packages, setup, Extension
-
 from onwebchange import __version__ as version
+from setuptools import find_packages, setup
+
 """
 linux:
 rm -rf "dist/*";rm -rf "build/*";python3 setup.py bdist_wheel;twine upload "dist/*;rm -rf "dist/*";rm -rf "build/*""
 win32:
-rm -rf dist;rm -rf build;python3 setup.py bdist_wheel;twine upload "dist/*";rm -rf dist;rm -rf build
+rm -rf dist;rm -rf build;python3 setup.py bdist_wheel;twine upload "dist/*";rm -rf dist;rm -rf build;rm -rf onwebchange.egg-info
 """
 
 install_requires = [
