@@ -16,7 +16,7 @@ from torequests.utils import curlparse, find_one, flush_print, md5, ttime
 
 SHORTEN_RESULT_MAX_LENGTH = 100
 GLOBAL_LOCK = Lock()
-__version__ = '0.2.3'
+__version__ = '0.2.4'
 
 
 def _default_shorten_result_function(result):

@@ -147,7 +147,7 @@
         </template>
 
 
-        <el-dialog title="Task Info" :visible.sync="dialogFormVisible">
+        <el-dialog title="Task Info" :visible.sync="dialogFormVisible" :close-on-click-modal="false">
             <el-form :model="task_form">
                 <el-form-item label="name *">
                     <el-input v-model="task_form.name" placeholder="unique name" autocomplete="off"></el-input>
