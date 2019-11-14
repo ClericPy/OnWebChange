@@ -1,24 +1,26 @@
 # onwebchange
 
-- [x] Default Console Web UI
-- [x] RSS support
-- [x] Release on pypi
+- [x] Default Console Web UI.
+- [x] RSS support.
+- [x] Release on pypi.
 - [x] Add **tag** filter, to  distinguish all the RSS sites.
-- [x] Add .pyz release for one-key-deploy.
-
-
+- [x] Add .pyz usage for fast deploying.
 
 ### Install
 
-> > pip install onwebchange -U
->
-> > python3 -m onwebchange -f wc.config -i 300 --host=127.0.0.1 -p 8080 --username=admin --password=admin
+```bash
+> pip3 install onwebchange -U
 
-**or shiv as one-file onwebchange.pyz for fast deploying**
+> python3 -m onwebchange -f wc.config -i 300 --host=127.0.0.1 -p 8080 --username=admin --password=admin
+```
 
-> > shiv -o onwebchange.pyz -e onwebchange.__main__:main --compressed onwebchange
->
-> > python3.7 onwebchange.pyz --username=admin --password=admin
+**or shiv as one file "onwebchange.pyz", for fast deploying**
+
+```bash
+> pip3 install shiv -U
+> shiv -o onwebchange.pyz -e onwebchange.__main__:main --compressed onwebchange
+> python3.7 onwebchange.pyz --username=admin --password=admin
+```
 
 ### Requirements
 
