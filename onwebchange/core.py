@@ -14,7 +14,8 @@ from torequests.dummy import Requests
 from torequests.logs import init_logger
 from torequests.utils import curlparse, find_one, flush_print, md5, ttime
 
-SHORTEN_RESULT_MAX_LENGTH = 100
+# 140 like weibo
+SHORTEN_RESULT_MAX_LENGTH = 140
 GLOBAL_LOCK = Lock()
 __version__ = '0.2.4'
 
