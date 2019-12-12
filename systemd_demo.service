@@ -1,0 +1,10 @@
+[Unit]
+Description=onwebchange
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/python3.7 -m onwebchange --username=admin --password=password
+
+[Install]
+WantedBy=multi-user.target
+WantedBy=network-online.target
