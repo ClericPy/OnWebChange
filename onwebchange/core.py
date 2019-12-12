@@ -17,7 +17,7 @@ from torequests.utils import curlparse, find_one, flush_print, md5, ttime
 # 140 like weibo
 SHORTEN_RESULT_MAX_LENGTH = 140
 GLOBAL_LOCK = Lock()
-__version__ = '0.2.4'
+__version__ = '0.2.5'
 
 
 def _default_shorten_result_function(result):
@@ -202,8 +202,10 @@ class WatchdogTask(object):
             self.__class__.BeautifulSoup = BeautifulSoup
         if resp:
             result = []
+            scode = resp.content.decode(
+                self.encoding, errors='ignore') if self.encoding else resp.text
             soup = self.BeautifulSoup(
-                resp.text, features=self.BeautifulSoupFeatures)
+                scode, features=self.BeautifulSoupFeatures)
             result = soup.select(self.operation)
             if self.value == '$text':
                 result = [item.text for item in result]
@@ -314,6 +316,7 @@ class WatchdogTask(object):
         resp = await self.req.request(
             retry=self.GLOBAL_RETRY,
             timeout=self.GLOBAL_TIMEOUT,
+            verify=0,
             **self.request_args)
         return resp
 
@@ -336,7 +339,7 @@ class WatchdogTask(object):
         return result
 
     def sync_test(self):
-        resp = requests.request(**self.request_args)
+        resp = requests.request(verify=0, **self.request_args)
         result = self.get_parse_result(resp)
         return result
 
