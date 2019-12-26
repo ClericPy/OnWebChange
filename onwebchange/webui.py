@@ -107,7 +107,7 @@ def update_task():
         app.wc.logger.error(traceback.format_exc())
         ok = False
         result['error'] = err
-    result['ok'] = ok
+    result['exist'] = ok
     return result
 
 

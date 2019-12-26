@@ -181,7 +181,8 @@
                     <el-input v-model="task_form.check_interval" autocomplete="off"></el-input>
                 </el-form-item>
                 <el-form-item label="work_hours">
-                    <el-input v-model="task_form.work_hours" placeholder="set the work_hours for crawler"
+                    <el-input v-model="task_form.work_hours"
+                        placeholder="work_hours for crawler, format like: '0, 24' or JSON-like [0, 1, 2, 3, 5]"
                         autocomplete="off">
                     </el-input>
                 </el-form-item>

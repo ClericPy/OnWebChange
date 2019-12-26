@@ -17,7 +17,7 @@ from torequests.utils import curlparse, find_one, flush_print, md5, ttime
 # 140 like weibo
 SHORTEN_RESULT_MAX_LENGTH = 140
 GLOBAL_LOCK = Lock()
-__version__ = '0.2.5'
+__version__ = '0.2.6'
 
 
 def _default_shorten_result_function(result):
@@ -151,13 +151,29 @@ class WatchdogTask(object):
 
     @staticmethod
     def ensure_work_hours(work_hours):
-        work_hours = re.findall(r'\d+', work_hours or '0, 24')[:2]
-        return ', '.join(work_hours)
+        try:
+            whs = json.loads(work_hours or "0, 24")
+            for wh in whs:
+                if not isinstance(wh, int):
+                    break
+            else:
+                # good json-like int list
+                return work_hours
+            # bad json
+            return '0, 24'
+        except json.JSONDecodeError:
+            work_hours = re.findall(r'\d+', work_hours or '0, 24')[:2]
+            return ', '.join(work_hours)
+        except Exception:
+            return '0, 24'
 
     def check_work_hours(self, current_hour=None):
         current_hour = current_hour or int(time.strftime('%H'))
-        return current_hour in range(*(int(i)
-                                       for i in self.work_hours.split(', ')))
+        if re.match(r'^\d+, \d+$', self.work_hours):
+            return current_hour in range(*(
+                int(i) for i in self.work_hours.split(', ')))
+        else:
+            return current_hour in json.loads(self.work_hours)
 
     @property
     def is_finished(self):
