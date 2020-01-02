@@ -1,9 +1,9 @@
-# onwebchange
+# onwebchange v0.2.7
 
 - [x] Default Console Web UI.
 - [x] RSS support.
 - [x] Release on pypi.
-- [x] Add **tag** filter, to  distinguish all the RSS sites.
+- [x] Add **tag** filter, to distinguish all the RSS sites. Add multiple tags support.
 - [x] Add .pyz usage for fast deploying.
 
 ### Install
