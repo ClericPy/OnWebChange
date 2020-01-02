@@ -12,12 +12,12 @@ from threading import Lock
 import requests
 from torequests.dummy import Requests
 from torequests.logs import init_logger
-from torequests.utils import curlparse, find_one, flush_print, md5, ttime
+from torequests.utils import curlparse, find_one, flush_print, md5, ttime, unique
 
 # 140 like weibo
 SHORTEN_RESULT_MAX_LENGTH = 140
 GLOBAL_LOCK = Lock()
-__version__ = '0.2.6'
+__version__ = '0.2.7'
 
 
 def _default_shorten_result_function(result):
@@ -48,7 +48,7 @@ class WatchdogTask(object):
                  parser_name=None,
                  operation=None,
                  value=None,
-                 tag='default',
+                 tag='',
                  work_hours='0, 24',
                  sorting_list=True,
                  check_interval=300,
@@ -70,7 +70,7 @@ class WatchdogTask(object):
             :type operation: str, optional
             :param value: value operation for the parser, defaults to None
             :type value: str, optional
-            :param tag: tag for filter, defaults to "default"
+            :param tag: tag for filter, split by "/", defaults to "default"
             :type tag: str, optional
             :param work_hours: work_hours of the crawler, defaults to '0, 24', means range(0, 24)
             :type work_hours: str, optional
@@ -127,7 +127,7 @@ class WatchdogTask(object):
         self.parser_name = parser_name
         self.operation = operation
         self.value = value
-        self.tag = tag
+        self.tag = self._ensure_tags(tag)
         self.work_hours = self.ensure_work_hours(work_hours)
         self.check_interval = int(check_interval)
         self.sorting_list = sorting_list
@@ -148,6 +148,17 @@ class WatchdogTask(object):
         if not cls.req:
             cls.req = Requests(
                 default_host_frequency=cls.DEFAULT_HOST_FREQUENCY)
+
+    @classmethod
+    def _ensure_tags(cls, tag):
+        if not tag:
+            return ['default']
+        elif isinstance(tag, str):
+            tags = [t.strip() for t in re.split(r'\s*,\s*', tag)]
+            return [i for i in unique(tags) if i]
+        else:
+            # for list / set / tuple / dict
+            return list(tag)
 
     @staticmethod
     def ensure_work_hours(work_hours):

@@ -39,6 +39,8 @@ def check_login(realm="private", text="Access denied"):
 @check_login()
 def index():
     tag = request.GET.get('tag') or ''
+    if tag:
+        tag = tag.encode('latin1').decode('utf-8')
     return template(
         index_tpl_path,
         cdn_urls=app.cdn_urls,
@@ -72,15 +74,28 @@ def get_task():
 @app.get('/get_task_list')
 @check_login()
 def get_task_list():
-    task_name = request.GET.get('name')
     tag = request.GET.get('tag') or ''
-    result = app.wc.get_task(task_name)
+    if tag:
+        tag = tag.encode('latin1').decode('utf-8')
+    result = app.wc.get_task()
     all_tags = set()
-    result_list = sorted(
-        filter(lambda item: item.get('tag') == tag if (all_tags.add(item.get('tag'))) or tag else True, result.values()),
-        key=lambda item: item.get('last_change_time', '2000-01-01 00:00:00'),
-        reverse=True)
-    all_tags = sorted(({'value': tag, 'label': tag} for tag in all_tags), key=lambda item: item['label'])
+    result_list = []
+    # collect all_tags, filt by tag
+    for item in result.values():
+        tags = set(item.get('tag') or set())
+        all_tags = all_tags | tags
+        if not tag or tag in tags:
+            result_list.append(item)
+    # sorted by last_change_time
+    # result_list = sorted(
+    #     result_list,
+    #     key=lambda item: item.get('last_change_time', '2000-01-01 00:00:00'),
+    #     reverse=True)
+    all_tags = sorted(({
+        'value': tag,
+        'label': tag
+    } for tag in all_tags),
+                      key=lambda item: item['label'])
     all_tags.insert(0, {'value': '', 'label': 'All'})
     for item in result_list:
         item['latest_data'] = item['check_result_list'][0]['data'] if item[
@@ -176,6 +191,8 @@ def gen_rss(data):
 def rss_handler():
     lang = request.GET.get('lang') or 'zh-cn'
     tag = request.GET.get('tag') or ''
+    if tag:
+        tag = tag.encode('latin1').decode('utf-8')
     token = request.GET.get('token')
     # redirect for token
     if all(
@@ -201,7 +218,7 @@ def rss_handler():
             app.wc.tasks.values(),
             key=lambda item: item.last_change_time or t0,
             reverse=True):
-        if tag and task.tag != tag:
+        if tag and tag not in task.tag:
             continue
         # 当日 0 点发布前一天的结果
         pubDate: str = ttime(

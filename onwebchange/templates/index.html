@@ -111,25 +111,31 @@
         <template style="width: 100%; height: 70%;">
 
             <el-table :data="tasks" highlight-current-row @current-change="handleCurrentChange" stripe
-                style="width: 100%; height: 100%;">
-                <el-table-column prop="tag" label="Tag" width="90">
+                style="width: 100%; height: 100%;" :default-sort="{prop: 'last_change_time', order: 'descending'}">
+                <el-table-column label="Tags" width="90">
+                    <template slot-scope="scope">
+                        <div v-for="tag in scope.row.tag">
+                            <el-link type="primary" :href="'.?tag=' + encodeURIComponent(tag)">${tag}</el-link><br>
+                        </div>
+                    </template>
                 </el-table-column>
-                <el-table-column prop="name" label="Name" width="180">
+                <el-table-column sortable prop="name" label="Name" width="180">
                 </el-table-column>
-                <el-table-column prop="check_interval" label="check_interval(s)" width="180">
+                <el-table-column sortable prop="check_interval" label="check_interval(s)" width="180">
                 </el-table-column>
                 <el-table-column prop="work_hours" label="work_hours" width="120">
                 </el-table-column>
-                <el-table-column prop="last_check_time" label="last_check_time">
+                <el-table-column sortable prop="last_check_time" label="last_check_time">
                 </el-table-column>
-                <el-table-column prop="last_change_time" label="last_change_time">
+                <el-table-column sortable prop="last_change_time" label="last_change_time">
                 </el-table-column>
                 <el-table-column prop="latest_data" label="latest_data">
                 </el-table-column>
                 <el-table-column label="origin_url">
                     <template slot-scope="scope">
-                        <a :href="scope.row.origin_url" target="_blank"
-                            class="buttonText">${scope.row.origin_url}</a></template>
+                        <el-link :href="scope.row.origin_url" target="_blank" type="success">${scope.row.origin_url}
+                        </el-link>
+                    </template>
                 </el-table-column>
                 <el-table-column prop="change_time_ago" label="change_time_ago">
                 </el-table-column>
@@ -153,7 +159,8 @@
                     <el-input v-model="task_form.name" placeholder="unique name" autocomplete="off"></el-input>
                 </el-form-item>
                 <el-form-item label="tag">
-                    <el-input v-model="task_form.tag" placeholder="set the tag for group filter, defaults to 'default'"
+                    <el-input v-model="task_form.tag"
+                        placeholder="set the tag for group filter, split by ',', defaults to 'default'"
                         autocomplete="off">
                     </el-input>
                 </el-form-item>
@@ -182,7 +189,7 @@
                 </el-form-item>
                 <el-form-item label="work_hours">
                     <el-input v-model="task_form.work_hours"
-                        placeholder="work_hours for crawler, format like: '0, 24' or JSON-like [0, 1, 2, 3, 5]"
+                        placeholder="work_hours for crawler, format like: '0, 24' or JSON-like [0, 1, 2, 3, 5], or 25, 10 to disable this task."
                         autocomplete="off">
                     </el-input>
                 </el-form-item>
@@ -382,7 +389,7 @@
 
                 },
                 jumpForTag(tag) {
-                    window.location.href = '/?tag=' + tag
+                    window.location.href = '/?tag=' + encodeURIComponent(tag)
                 },
                 testTask() {
                     var data = this.task_form
