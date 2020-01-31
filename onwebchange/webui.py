@@ -3,10 +3,11 @@
 import base64
 import os
 import pathlib
+import re
 import traceback
 
-from bottle import Bottle, request, response, template, HTTPError, redirect
-from torequests.utils import escape, ptime, time, timeago, ttime, md5
+from bottle import Bottle, HTTPError, redirect, request, response, template
+from torequests.utils import escape, md5, ptime, time, timeago, ttime, urlparse
 
 from .core import GLOBAL_LOCK, WatchdogTask, __version__
 
@@ -204,11 +205,15 @@ def rss_handler():
             redirect(f'/rss?token={token}&tag={tag}', 302)
         else:
             redirect('/', 302)
+    host = request.get_header('Host', app.console_url)
+    source_link = '{scheme}://{host}'.format(
+        scheme=urlparse(request.url).scheme, host=host)
+    print(source_link)
     xml_data: dict = {
         'channel': {
             'title': 'Watchdog',
             'description': 'Watchdog on web change',
-            'link': request.GET.headers.get('Host') or app.console_url,
+            'link': source_link,
             'language': lang,
         },
         'items': []
