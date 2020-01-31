@@ -17,7 +17,7 @@ from torequests.utils import curlparse, find_one, flush_print, md5, ttime, uniqu
 # 140 like weibo
 SHORTEN_RESULT_MAX_LENGTH = 140
 GLOBAL_LOCK = Lock()
-__version__ = '0.2.7'
+__version__ = '0.2.8'
 
 
 def _default_shorten_result_function(result):

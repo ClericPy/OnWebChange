@@ -208,7 +208,7 @@ def rss_handler():
         'channel': {
             'title': 'Watchdog',
             'description': 'Watchdog on web change',
-            'link': app.console_url,
+            'link': request.GET.headers.get('Host') or app.console_url,
             'language': lang,
         },
         'items': []
