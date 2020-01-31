@@ -9,7 +9,8 @@ import traceback
 from bottle import Bottle, HTTPError, redirect, request, response, template
 from torequests.utils import escape, md5, ptime, time, timeago, ttime, urlparse
 
-from .core import GLOBAL_LOCK, WatchdogTask, __version__
+from . import __version__
+from .core import GLOBAL_LOCK, WatchdogTask
 
 # app.wc = xxx
 app = Bottle()
@@ -230,10 +231,13 @@ def rss_handler():
             ptime(task.last_change_time), fmt='%a, %d %b %Y %H:%M:%S')
         link: str = task.origin_url
         title: str = f'{task.name}#{task.last_change_time}'
+        description: str = task.check_result_list[0][
+            'data'] if task.check_result_list else ''
         item: dict = {
             'title': title,
             'link': link,
             'guid': title,
+            'description': description,
             'pubDate': pubDate
         }
         xml_data['items'].append(item)

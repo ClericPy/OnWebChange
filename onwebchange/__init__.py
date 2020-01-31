@@ -1,3 +1,6 @@
 #! coding: utf-8
 
-from .core import WatchdogCage, WebHandler, __version__, WatchdogTask
+from .core import WatchdogCage, WatchdogTask, WebHandler
+
+__version__ = '0.2.9'
+__all__ = ['WatchdogCage', 'WatchdogTask', 'WebHandler']
