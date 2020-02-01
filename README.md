@@ -5,6 +5,7 @@
 - [x] Release on pypi.
 - [x] Add **tag** filter, to distinguish all the RSS sites. Add multiple tags support.
 - [x] Add .pyz usage for fast deploying.
+- [x] Support one-key sub RSS
 
 ### Install
 

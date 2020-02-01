@@ -127,6 +127,25 @@ def update_task():
     return result
 
 
+@app.post('/add_rss')
+@check_login()
+def add_rss():
+    url = request.body.read().decode('u8')
+    result = {}
+    try:
+        task = WatchdogTask.load_rss_task(url)
+        if isinstance(task, Exception):
+            raise task
+        app.wc.update_task(task)
+        ok = True
+    except Exception as err:
+        app.wc.logger.error(traceback.format_exc())
+        ok = False
+        result['error'] = err
+    result['ok'] = ok
+    return result
+
+
 @app.post('/test_task')
 @check_login()
 def test_task():

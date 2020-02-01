@@ -59,11 +59,11 @@
                 <span class="state-item">
                     Version: {{version}}
                 </span>
-                <span class="state-item">
-                    Page Refresh: ${refresh_time} (${autoRefreshInterval/1000}s)
+                <span class="state-item" title="Last refresh page time">
+                    Refresh: ${refresh_time} (${autoRefreshInterval/1000}s)
                 </span>
-                <span class="state-item">
-                    Crawl Task: ${tasks[0] == undefined?'no tasks':tasks[0].last_check_time} ({{loop_interval}}s)
+                <span class="state-item" title="Last crawl time">
+                    Crawl: ${tasks[0] == undefined?'no tasks':tasks[0].last_check_time} ({{loop_interval}}s)
                 </span>
                 <span class="state-item">
                     Status:
@@ -72,7 +72,7 @@
                     <i class="el-icon-error" v-show="status_icon_flag=='error'"> ${status}</i>
                     <i class="el-icon-success" v-show="status_icon_flag=='success'"> ${status}</i>
                 </span>
-                <span class="state-item">
+                <span class="state-item" style="width: 8em;">
                     <el-select v-model="current_tag" placeholder="Tags" @change="jumpForTag" size="mini">
                         <el-option v-for="item in tags" :key="item.value" :label="item.label" :value="item.value">
                         </el-option>
@@ -80,20 +80,25 @@
                 </span>
             </div>
             <div id="buttons">
-                <el-button @click.native.prevent="addTask" type="primary" size="small" round><i
+                <el-button @click.native.prevent="addRSS" type="warning" size="small" circle title="Add RSS URL"><i
+                        class="el-icon-circle-plus"></i>
+                </el-button>
+
+                <el-button @click.native.prevent="showAddTask" type="primary" size="small" round><i
                         class="el-icon-circle-plus"></i>
                     Add Task
                 </el-button>
+
                 <el-button @click.native.prevent="refreshData" size="small" round><i class="el-icon-refresh-right"></i>
-                    Refresh Page
+                    Refresh
                 </el-button>
                 <el-button @click="crawlTask" size="small" title="Crawl once without interval sleeping." round><i
-                        class="el-icon-download"></i> Force Crawl
+                        class="el-icon-download"></i> Crawl
                 </el-button>
                 <a href="/rss?tag={{tag}}" target="_blank" rel="noopener noreferrer">
-                    <el-button round size="small" type="warning"><i class="el-icon-star-off"></i> RSS Subs
-                    </el-button>
+                    <el-button round size="small" type="warning"><i class="el-icon-star-off"></i> RSS </el-button>
                 </a>
+
 
                 <a href="https://github.com/ClericPy/OnWebChange/issues" target="_blank" rel="noopener noreferrer">
                     <el-button round size="small" type="success"><i class="el-icon-s-comment"></i> Feedback
@@ -141,14 +146,15 @@
                 </el-table-column>
                 <el-table-column fixed="right" label="Operation" width="220">
                     <template slot-scope="scope">
-                        <el-switch v-model="scope.row.enable" active-color="#13ce66" inactive-color="#ff4949" style="margin: 0.5em;"
-                            @change='change_enable(scope.row)' size="mini" title="Switch between enable/disable">
+                        <el-switch v-model="scope.row.enable" active-color="#13ce66" inactive-color="#ff4949"
+                            style="margin: 0.5em;" @change='change_enable(scope.row)' size="mini"
+                            title="Switch between enable/disable">
                         </el-switch>
-                        <el-button @click.native.prevent="showTask(scope.row)" type="warning" size="mini" title="update task"
-                            icon="el-icon-edit-outline" circle>
+                        <el-button @click.native.prevent="showAddTaskForm(scope.row)" type="warning" size="mini"
+                            title="update task" icon="el-icon-edit-outline" circle>
                         </el-button>
-                        <el-button @click.native.prevent="removeTask(scope.row.name)" type="danger" size="mini" title="remove task"
-                            icon="el-icon-delete" circle>
+                        <el-button @click.native.prevent="removeTask(scope.row.name)" type="danger" size="mini"
+                            title="remove task" icon="el-icon-delete" circle>
                         </el-button>
                     </template>
                 </el-table-column>
@@ -336,7 +342,28 @@
                     // this.currentRow = val;
                     this.refreshData()
                 },
-                addTask() {
+                addRSS() {
+                    this.$prompt('Input the RSS URL', '', {
+                        confirmButtonText: 'OK',
+                        cancelButtonText: 'Cancel',
+                        inputPattern: /^https?:\/\/.*/,
+                        inputErrorMessage: 'URL bad format'
+                    }).then(({
+                        value
+                    }) => {
+                        this.$http.post('/add_rss', value).then(
+                            r => {
+                                this.openAlert(JSON.stringify(r.body))
+                                this.refreshData()
+                            }, r => {
+                                this.status = 'add RSS failed, Bad request (' + r.status + ') :' + r
+                                    .statusText
+                                this.status_icon_flag = 'error'
+                            }
+                        )
+                    }).catch(() => {});
+                },
+                showAddTask() {
                     var data = {
                         "name": "",
                         "request_args": "",
@@ -349,9 +376,9 @@
                         "origin_url": "",
                         "encoding": null
                     }
-                    this.showTask(data)
+                    this.showAddTaskForm(data)
                 },
-                showTask(item) {
+                showAddTaskForm(item) {
                     // if (item.request_args.constructor === Object) {
                     if (item.request_args.url) {
                         item.request_args = JSON.stringify(item.request_args, null, 2)

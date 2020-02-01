@@ -8,11 +8,13 @@ import time
 from functools import partial
 from inspect import getsource
 from threading import Lock
+from traceback import format_exc
 
 import requests
 from torequests.dummy import Requests
 from torequests.logs import init_logger
-from torequests.utils import curlparse, find_one, flush_print, md5, ttime, unique
+from torequests.utils import (curlparse, find_one, flush_print, md5, ttime,
+                              unique)
 
 # 140 like weibo
 SHORTEN_RESULT_MAX_LENGTH = 140
@@ -422,6 +424,55 @@ class WatchdogTask(object):
             json_or_dict = json.loads(json_or_dict)
         return cls(**json_or_dict)
 
+    @classmethod
+    def load_rss_task(cls, url):
+        kwargs = {
+            'name': url,
+            'request_args': url,
+            'parser_name': 'css',
+            'operation': 'item:first-of-type>title',
+            'value': '$text',
+            'sorting_list': False,
+            'origin_url': url,
+        }
+        try:
+            r = requests.request(
+                **{
+                    'url': url,
+                    'method': 'get',
+                    'headers': {
+                        'User-Agent': cls.CHROME_UA
+                    },
+                    'timeout': 5,
+                })
+            if not cls.BeautifulSoup:
+                from bs4 import BeautifulSoup
+                cls.BeautifulSoup = BeautifulSoup
+            try:
+                scode = r.content.decode('utf-8')
+                kwargs['encoding'] = 'utf-8'
+            except UnicodeDecodeError:
+                scode = r.content.decode('gb18030')
+                kwargs['encoding'] = 'gb18030'
+
+            soup = cls.BeautifulSoup(scode, features=cls.BeautifulSoupFeatures)
+            title = soup.select_one('title')
+            if title and title.text.strip():
+                kwargs['name'] = title.text.strip()
+            match = re.search('<link>(https?://[^<]+)</link>', scode)
+            if match:
+                kwargs['origin_url'] = match.group(1).strip()
+            now = ttime()
+            kwargs['last_check_time'] = now
+            kwargs['check_result_list'] = [{
+                'data': i.text,
+                'time': now,
+            } for i in soup.select('item:first-of-type>title')]
+            return cls(**kwargs)
+        except Exception as e:
+            cls.logger.error(f'add rss failed:\n{format_exc()}')
+            return e
+
 
 class WatchdogCage(object):
     logger = init_logger('WatchdogCage')
@@ -583,7 +634,8 @@ class WatchdogCage(object):
             running_tasks = [
                 asyncio.ensure_future(self.run_task(task))
                 for task in self.tasks.values()
-                if task.enable and task.check_work_hours(current_hour=current_hour) and
+                if task.enable and task.check_work_hours(
+                    current_hour=current_hour) and
                 ttime(time.time() - task.check_interval) >
                 (task.last_check_time or ttime_0)
             ]
