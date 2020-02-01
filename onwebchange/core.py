@@ -57,6 +57,7 @@ class WatchdogTask(object):
                  origin_url=None,
                  encoding=None,
                  last_change_time=None,
+                 enable=True,
                  **nonsense_kwargs):
         """Watchdog task.
             :param name: Task name.
@@ -71,7 +72,7 @@ class WatchdogTask(object):
             :type value: str, optional
             :param tag: tag for filter, split by "/", defaults to "default"
             :type tag: str, optional
-            :param work_hours: work_hours of the crawler, defaults to '0, 24', means range(0, 24)
+            :param work_hours: work_hours of the crawler, defaults to '0, 24', means range(0, 24), or [1, 3, 5] json-like string
             :type work_hours: str, optional
             :param sorting_list: whether sorting the list of result from `css or other parsers`, defaults to True
             :type sorting_list: bool, optional
@@ -85,6 +86,12 @@ class WatchdogTask(object):
             :type check_result_list: list, optional
             :param origin_url: the url to see the changement, defaults to request_args['url']
             :type origin_url: str, optional
+            :param encoding: http response encoding
+            :type encoding: str
+            :param last_change_time: last change time
+            :type last_change_time: str, optional
+            :param enable: skip crawl if False
+            :type enable: bool, optional
 
             request_args examples:
                 url:
@@ -128,6 +135,7 @@ class WatchdogTask(object):
         self.value = value
         self.tag = self._ensure_tags(tag)
         self.work_hours = self.ensure_work_hours(work_hours)
+        self.enable = bool(enable)
         self.check_interval = int(check_interval)
         self.sorting_list = sorting_list
         self.last_check_time = last_check_time
@@ -399,7 +407,8 @@ class WatchdogTask(object):
             'max_change': self.max_change,
             'origin_url': self.origin_url,
             'encoding': self.encoding,
-            'last_change_time': self.last_change_time
+            'last_change_time': self.last_change_time,
+            'enable': self.enable,
         }
 
     def dump_task(self):
@@ -574,7 +583,7 @@ class WatchdogCage(object):
             running_tasks = [
                 asyncio.ensure_future(self.run_task(task))
                 for task in self.tasks.values()
-                if task.check_work_hours(current_hour=current_hour) and
+                if task.enable and task.check_work_hours(current_hour=current_hour) and
                 ttime(time.time() - task.check_interval) >
                 (task.last_check_time or ttime_0)
             ]

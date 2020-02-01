@@ -91,7 +91,7 @@
                         class="el-icon-download"></i> Force Crawl
                 </el-button>
                 <a href="/rss?tag={{tag}}" target="_blank" rel="noopener noreferrer">
-                    <el-button round size="small" type="warning"><i class="el-icon-star-off"></i> RSS Reader
+                    <el-button round size="small" type="warning"><i class="el-icon-star-off"></i> RSS Subs
                     </el-button>
                 </a>
 
@@ -139,12 +139,15 @@
                 </el-table-column>
                 <el-table-column prop="change_time_ago" label="change_time_ago">
                 </el-table-column>
-                <el-table-column fixed="right" label="Operation" width="120">
+                <el-table-column fixed="right" label="Operation" width="220">
                     <template slot-scope="scope">
-                        <el-button @click.native.prevent="showTask(scope.row)" type="warning"
+                        <el-switch v-model="scope.row.enable" active-color="#13ce66" inactive-color="#ff4949" style="margin: 0.5em;"
+                            @change='change_enable(scope.row)' size="mini" title="Switch between enable/disable">
+                        </el-switch>
+                        <el-button @click.native.prevent="showTask(scope.row)" type="warning" size="mini" title="update task"
                             icon="el-icon-edit-outline" circle>
                         </el-button>
-                        <el-button @click.native.prevent="removeTask(scope.row.name)" type="danger"
+                        <el-button @click.native.prevent="removeTask(scope.row.name)" type="danger" size="mini" title="remove task"
                             icon="el-icon-delete" circle>
                         </el-button>
                     </template>
@@ -421,6 +424,17 @@
                     this.$http.post('/update_task', data).then(
                         r => {
                             this.openAlert(JSON.stringify(r.body))
+                            this.refreshData()
+                        }, r => {
+                            this.status = 'updateTask failed, Bad request (' + r.status + ') :' + r.statusText
+                            this.status_icon_flag = 'error'
+                        }
+                    )
+                },
+                change_enable(task) {
+                    var data = JSON.stringify(task)
+                    this.$http.post('/update_task', data).then(
+                        r => {
                             this.refreshData()
                         }, r => {
                             this.status = 'updateTask failed, Bad request (' + r.status + ') :' + r.statusText

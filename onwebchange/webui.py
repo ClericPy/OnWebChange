@@ -3,7 +3,6 @@
 import base64
 import os
 import pathlib
-import re
 import traceback
 
 from bottle import Bottle, HTTPError, redirect, request, response, template
