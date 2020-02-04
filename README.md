@@ -1,4 +1,4 @@
-# onwebchange v0.2.7
+# [onwebchange](https://github.com/ClericPy/onwebchange) [![PyPI version](https://badge.fury.io/py/onwebchange.svg)](https://badge.fury.io/py/onwebchange)
 
 - [x] Default Console Web UI.
 - [x] RSS support.

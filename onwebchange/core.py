@@ -430,10 +430,10 @@ class WatchdogTask(object):
             'name': url,
             'request_args': url,
             'parser_name': 'css',
-            'operation': 'item:first-of-type>title',
             'value': '$text',
             'sorting_list': False,
             'origin_url': url,
+            'max_change': 2,
         }
         try:
             r = requests.request(
@@ -459,15 +459,23 @@ class WatchdogTask(object):
             title = soup.select_one('title')
             if title and title.text.strip():
                 kwargs['name'] = title.text.strip()
-            match = re.search('<link>(https?://[^<]+)</link>', scode)
+            match = re.search(
+                '<link>(https?://[^<]+)</link>', scode) or re.search(
+                    '<link [^>]*href=[\'"](https?://[^"\']+)[\'"]', scode)
             if match:
                 kwargs['origin_url'] = match.group(1).strip()
             now = ttime()
             kwargs['last_check_time'] = now
+            items = soup.select('item:first-of-type>title')
+            if items:
+                kwargs['operation'] = 'item:first-of-type>title'
+            else:
+                items = soup.select('entry:first-of-type>title')
+                kwargs['operation'] = 'entry:first-of-type>title'
             kwargs['check_result_list'] = [{
                 'data': i.text,
                 'time': now,
-            } for i in soup.select('item:first-of-type>title')]
+            } for i in items][:kwargs['max_change']]
             return cls(**kwargs)
         except Exception as e:
             cls.logger.error(f'add rss failed:\n{format_exc()}')

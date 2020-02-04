@@ -1,11 +1,9 @@
-#
-#! coding:utf-8
+# -*- coding: utf-8 -*-
 import codecs
 import sys
 
 from onwebchange import __version__ as version
 from setuptools import find_packages, setup
-
 """
 linux:
 rm -rf "dist/*";rm -rf "build/*";python3 setup.py bdist_wheel;twine upload "dist/*;rm -rf "dist/*";rm -rf "build/*""
