@@ -60,7 +60,7 @@
                     Version: {{version}}
                 </span>
                 <span class="state-item" title="Last refresh page time">
-                    Refresh: ${refresh_time} (${autoRefreshInterval/1000}s)
+                    Refresh: ${refresh_time} (${currentRefreshInterval}s)
                 </span>
                 <span class="state-item" title="Last crawl time">
                     Crawl: ${tasks[0] == undefined?'no tasks':tasks[0].last_check_time} ({{loop_interval}}s)
@@ -126,7 +126,7 @@
                 </el-table-column>
                 <el-table-column sortable prop="name" label="Name" width="180">
                 </el-table-column>
-                <el-table-column sortable prop="check_interval" label="check_interval(s)" width="180">
+                <el-table-column sortable prop="check_interval" label="interval(s)" width="120">
                 </el-table-column>
                 <el-table-column prop="work_hours" label="work_hours" width="120">
                 </el-table-column>
@@ -142,7 +142,12 @@
                         </el-link>
                     </template>
                 </el-table-column>
-                <el-table-column prop="change_time_ago" label="change_time_ago">
+                <el-table-column label="change_time_ago">
+                    <template slot-scope="scope">
+                        <el-link :href="scope.row.request_args.url" target="_blank" type="success">
+                            ${scope.row.change_time_ago}
+                        </el-link>
+                    </template>
                 </el-table-column>
                 <el-table-column fixed="right" label="Operation" width="220">
                     <template slot-scope="scope">
@@ -278,7 +283,8 @@
                     status_icon_flag: 'loading',
                     status: 'loading',
                     refresh_time: '',
-                    autoRefreshInterval: 60000,
+                    autoRefreshInterval: 60,
+                    currentRefreshInterval: 60,
                     tags: [],
                     current_tag: '{{tag}}',
                 };
@@ -311,6 +317,7 @@
                     if (this.ok != true) {
                         return
                     }
+                    app.currentRefreshInterval = app.autoRefreshInterval
                     this.refresh_time = new Date().Format("yyyy-MM-dd HH:mm:ss")
                     this.$http.get('/get_task_list?tag=' + this.current_tag).then(
                         r => {
@@ -338,9 +345,10 @@
                         }
                     )
                 },
-                handleCurrentChange(val) {
-                    // this.currentRow = val;
-                    this.refreshData()
+                handleCurrentChange(task) {
+                    // this.currentRow = task;
+                    // console.log(task)
+                    // this.refreshData()
                 },
                 addRSS() {
                     this.$prompt('Input the RSS URL', '', {
@@ -459,6 +467,9 @@
                     )
                 },
                 change_enable(task) {
+                    if (!task) {
+                        return
+                    }
                     var data = JSON.stringify(task)
                     this.$http.post('/update_task', data).then(
                         r => {
@@ -481,8 +492,11 @@
         }).$mount('#app')
         window.onload = app.onload_function
         setInterval(() => {
-            app.refreshData()
-        }, app.autoRefreshInterval);
+            app.currentRefreshInterval -= 1
+            if (app.currentRefreshInterval == 0) {
+                app.refreshData()
+            }
+        }, 1000);
     </script>
 </body>
 
