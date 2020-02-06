@@ -7,7 +7,6 @@ if __name__ == "__main__":
         file_path=None,
         loop_interval=300,
         auto_open_browser=True,
-        change_callback=lambda task: print(task.name, 'updated'),
         app_kwargs={'port': 9988},
         username='',
         password='')

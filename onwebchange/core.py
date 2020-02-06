@@ -60,6 +60,7 @@ class WatchdogTask(object):
                  encoding=None,
                  last_change_time=None,
                  enable=True,
+                 custom='',
                  **nonsense_kwargs):
         """Watchdog task.
             :param name: Task name.
@@ -94,6 +95,8 @@ class WatchdogTask(object):
             :type last_change_time: str, optional
             :param enable: skip crawl if False
             :type enable: bool, optional
+            :param custom: some string for callback or notification
+            :type custom: bool, optional
 
             request_args examples:
                 url:
@@ -138,6 +141,7 @@ class WatchdogTask(object):
         self.tag = self._ensure_tags(tag)
         self.work_hours = self.ensure_work_hours(work_hours)
         self.enable = bool(enable)
+        self.custom = custom
         self.check_interval = int(check_interval)
         self.sorting_list = sorting_list
         self.last_check_time = last_check_time
@@ -410,6 +414,7 @@ class WatchdogTask(object):
             'origin_url': self.origin_url,
             'encoding': self.encoding,
             'last_change_time': self.last_change_time,
+            'custom': self.custom,
             'enable': self.enable,
         }
 
@@ -480,6 +485,25 @@ class WatchdogTask(object):
         except Exception as e:
             cls.logger.error(f'add rss failed:\n{format_exc()}')
             return e
+
+    async def handle_change_custom(self):
+        if not self.custom:
+            return
+        method, arg = self.custom.split(':', 1)
+        function = getattr(self, f'_handle_{method}', None)
+        if function:
+            if asyncio.iscoroutinefunction(function):
+                await function(arg)
+            elif callable(function):
+                await self.loop.run_in_executor(None, function, arg)
+
+    async def _handle_serverjiang(self, arg):
+        text = f'{self.name}#{self.last_change_time}'
+        description: str = self.check_result_list[0][
+            'data'] if self.check_result_list else ''
+        body = f'{self.origin_url}\n\n{description}'
+        url = f'https://sc.ftqq.com/{arg}.send'
+        await self.req.post(url, data={'text': text, 'desp': body})
 
 
 class WatchdogCage(object):
@@ -622,6 +646,10 @@ class WatchdogCage(object):
                     self.logger.error(
                         f'bad change_callback type: {type(self.change_callback)}, should be function/coroutinefunction'
                     )
+            elif task.custom:
+                # use default callback while custom is not null
+                await task.handle_change_custom()
+
         else:
             state = ''
         task.check_result_list = task.check_result_list[:task.max_change]

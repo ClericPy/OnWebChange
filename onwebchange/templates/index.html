@@ -214,6 +214,10 @@
                     <el-switch v-model="task_form.sorting_list" active-color="#13ce66" inactive-color="#ff4949">
                     </el-switch>
                 </el-form-item>
+                <el-form-item label="enable">
+                    <el-switch v-model="task_form.enable" active-color="#13ce66" inactive-color="#ff4949">
+                    </el-switch>
+                </el-form-item>
                 <el-form-item label="last_check_time">
                     <el-input v-model="task_form.last_check_time" autocomplete="off"></el-input>
                 </el-form-item>
@@ -238,7 +242,10 @@
                     <el-input v-model="task_form.encoding" placeholder="can be null string" autocomplete="off">
                     </el-input>
                 </el-form-item>
-
+                <el-form-item label="custom">
+                    <el-input v-model="task_form.custom" placeholder="arg for notification, split by `:`" autocomplete="off">
+                    </el-input>
+                </el-form-item>
             </el-form>
             <div slot="footer" class="dialog-footer">
                 <el-button @click="dialogFormVisible = false">Cancel</el-button>
@@ -381,8 +388,10 @@
                         "check_interval": 300,
                         "max_change": 2,
                         "sorting_list": true,
+                        "enable": true,
                         "origin_url": "",
-                        "encoding": null
+                        "encoding": null,
+                        "custom": "",
                     }
                     this.showAddTaskForm(data)
                 },
